@@ -3,4 +3,5 @@ tmp/*
 target/*
 Cargo.lock
 .nfs*
-
+*.orig
+*.rej
