@@ -1,6 +1,6 @@
 [package]
 name = "prometheus-license-exporter"
-version = "0.1.0-20220420"
+version = "0.1.0-20220421"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -17,4 +17,5 @@ reqwest = { version = "0.11.10", features = ["blocking", "native-tls"] }
 serde = { version = "1.0.136", features = ["derive"] }
 serde_yaml = "0.8.23"
 simple-error = "0.2.3"
-
+tokio = { version = "1.17.0", features = ["full"] }
+warp = "0.3.2"
