@@ -55,7 +55,10 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
     }
 
     let stdout = String::from_utf8(cmd.stdout)?;
-    for line in stdout.lines() {
+    let lines: Vec<&str> = stdout.lines().collect();
+
+    for i in 0..lines.len() {
+        let line = lines[i];
         if let Some(capt) = RE_LMSTAT_USAGE.captures(line) {
             if capt.len() != 4 {
                 error!(
