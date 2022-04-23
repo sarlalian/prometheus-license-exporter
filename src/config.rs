@@ -20,7 +20,6 @@ pub struct FlexLM {
     pub license: String,
     pub excluded_features: Option<Vec<String>>,
     pub export_user: Option<bool>,
-    pub export_version: Option<bool>,
 }
 
 pub fn parse_config_file(f: &str) -> Result<Configuration, Box<dyn Error>> {

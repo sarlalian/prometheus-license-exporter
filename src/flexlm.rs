@@ -23,15 +23,18 @@ lazy_static! {
     )
     .unwrap();
     pub static ref FLEXLM_FEATURES_USER: IntGaugeVec = IntGaugeVec::new(
-        Opts::new("flexlm_feature_used_users", "Number of licenses used by user"),
-        &["app", "name", "user"],
-    ).unwrap();
-    // TODO: Use the same name as FLEXLM_FEATURES_USER (register panics at the moment)
-    pub static ref FLEXLM_FEATURES_USER_VERSION: IntGaugeVec = IntGaugeVec::new(
-        Opts::new("flexlm_feature_versions_used_users", "Number of licenses and version used by user"),
+        Opts::new(
+            "flexlm_feature_used_users",
+            "Number of licenses used by user"
+        ),
         &["app", "name", "user", "version"],
-    ).unwrap();
-
+    )
+    .unwrap();
+    pub static ref FLEXLM_SERVER_STATUS: IntGaugeVec = IntGaugeVec::new(
+        Opts::new("flexlm_server_status", "Status of license server(s)"),
+        &["app", "fqdn", "master", "port", "version"],
+    )
+    .unwrap();
 }
 
 pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
@@ -39,10 +42,16 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
         static ref RE_LMSTAT_USAGE: Regex = Regex::new(r"^Users of ([a-zA-Z0-9_\-+]+):\s+\(Total of (\d+) license[s]? issued;\s+Total of (\d+) license[s]? in use\)$").unwrap();
         static ref RE_LMSTAT_USERS_SINGLE_LICENSE: Regex = Regex::new(r"^\s+(\w+) [\w.\-_]+\s+[\w/]+\s+\(([\w\-.]+)\).*, start [A-Z][a-z][a-z] \d+/\d+ \d+:\d+$").unwrap();
         static ref RE_LMSTAT_USERS_MULTI_LICENSE: Regex = Regex::new(r"^\s+(\w+) [\w.\-_]+\s+[a-zA-Z0-9/]+\s+\(([\w.\-_]+)\)\s+\([\w./\s]+\),\s+start [A-Z][a-z][a-z] \d+/\d+ \d+:\d+,\s+(\d+) licenses$").unwrap();
+        static ref RE_LMSTAT_LICENSE_SERVER_STATUS: Regex = Regex::new(r"^License server status:\s+([\w.\-@,]+)$").unwrap();
+        static ref RE_LMSTAT_SERVER_STATUS: Regex = Regex::new(r"([\w.\-]+):\s+license server (\w+)\s+(\(MASTER\))?\s*([\w.]+)").unwrap();
     }
 
     // dict -> "feature" -> "user" -> "version" -> count
     let mut fuv: HashMap<String, HashMap<String, HashMap<String, i64>>> = HashMap::new();
+    let mut server_port: HashMap<String, String> = HashMap::new();
+    let mut server_status: HashMap<String, i64> = HashMap::new();
+    let mut server_master: HashMap<String, bool> = HashMap::new();
+    let mut server_version: HashMap<String, String> = HashMap::new();
 
     debug!("flexlm.rs:fetch: Running {} -c {} -a", lmutil, &lic.license);
     let cmd = Command::new(lmutil)
@@ -146,7 +155,7 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
         } else if let Some(capt) = RE_LMSTAT_USERS_MULTI_LICENSE.captures(line) {
             if capt.len() != 3 {
                 error!(
-                    "Regular expression returns {} capture groups instead of 4",
+                    "Regular expression returns {} capture groups instead of 3",
                     capt.len()
                 );
                 continue;
@@ -170,51 +179,81 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
                 .entry(user.to_string())
                 .or_insert_with(HashMap::<String, i64>::new);
             *usr.entry(version.to_string()).or_insert(0) += count;
+        } else if let Some(capt) = RE_LMSTAT_LICENSE_SERVER_STATUS.captures(line) {
+            if capt.len() != 2 {
+                error!(
+                    "Regular expression returns {} capture groups instead of 2",
+                    capt.len()
+                );
+                continue;
+            }
+            let status_line = capt.get(1).map_or("", |m| m.as_str());
+            for server_line in status_line.split(',') {
+                let srv_port: Vec<&str> = server_line.split('@').collect();
+                server_port.insert(srv_port[1].to_string(), srv_port[0].to_string());
+                server_status.insert(srv_port[1].to_string(), 0);
+                server_master.insert(srv_port[1].to_string(), false);
+                server_version.insert(srv_port[1].to_string(), String::new());
+            }
+        } else if let Some(capt) = RE_LMSTAT_SERVER_STATUS.captures(line) {
+            if capt.len() != 5 {
+                error!(
+                    "Regular expression returns {} capture groups instead of 5",
+                    capt.len()
+                );
+                continue;
+            }
+            let server = capt.get(1).map_or("", |m| m.as_str());
+            let status = capt.get(2).map_or("", |m| m.as_str());
+            let master = capt.get(3).map_or("", |m| m.as_str());
+            let version = capt.get(4).map_or("", |m| m.as_str());
+            if status == "UP" {
+                server_status.insert(server.to_string(), 1);
+            }
+            if master == "(MASTER)" {
+                server_master.insert(server.to_string(), true);
+            }
+            server_version.insert(server.to_string(), version.to_string());
         }
     }
 
-    let mut users = false;
-    let mut versions = false;
-    if let Some(export_user) = lic.export_user {
-        users = export_user
-    }
-    if let Some(export_version) = lic.export_version {
-        versions = export_version
+    for server in server_status.keys() {
+        let status = server_status.get(server).unwrap_or(&0);
+        let _master = server_master.get(server).unwrap_or(&false);
+        let master = format!("{}", _master);
+        let port = match server_port.get(server) {
+            Some(v) => v,
+            None => "",
+        };
+        let version = match server_version.get(server) {
+            Some(v) => v,
+            None => "",
+        };
+        debug!(
+            "flexlm.rs:fetch: Setting flexlm_server_status -> {} {} {} {} {} {}",
+            lic.name, server, master, port, version, status
+        );
+        FLEXLM_SERVER_STATUS
+            .with_label_values(&[&lic.name, server, &master, port, version])
+            .set(*status);
     }
 
-    if users {
-        if versions {
-            for (feat, uv) in fuv.iter() {
-                for (user, v) in uv.iter() {
-                    for (version, count) in v.iter() {
-                        debug!(
-                            "flexlm.rs:fetch: Setting flexlm_feature_used_users -> {} {} {} {} {}",
-                            lic.name, feat, user, version, *count
-                        );
-                        FLEXLM_FEATURES_USER_VERSION
-                            .with_label_values(&[&lic.name, feat, user, version])
-                            .set(*count);
-                    }
-                }
-            }
-        } else {
-            for (feat, uv) in fuv.iter() {
-                for (user, v) in uv.iter() {
-                    let mut count: i64 = 0;
-                    for (_, vcount) in v.iter() {
-                        count += *vcount;
-                    }
+    if lic.export_user.is_some() {
+        for (feat, uv) in fuv.iter() {
+            for (user, v) in uv.iter() {
+                for (version, count) in v.iter() {
                     debug!(
-                        "flexlm.rs:fetch: Setting flexlm_feature_used_users -> {} {} {} {}",
-                        lic.name, feat, user, count
+                        "flexlm.rs:fetch: Setting flexlm_feature_used_users -> {} {} {} {} {}",
+                        lic.name, feat, user, version, *count
                     );
                     FLEXLM_FEATURES_USER
-                        .with_label_values(&[&lic.name, feat, user])
-                        .set(count);
+                        .with_label_values(&[&lic.name, feat, user, version])
+                        .set(*count);
                 }
             }
         }
     }
+
     Ok(())
 }
 
@@ -229,6 +268,6 @@ pub fn register() {
         .register(Box::new(FLEXLM_FEATURES_USER.clone()))
         .unwrap();
     exporter::REGISTRY
-        .register(Box::new(FLEXLM_FEATURES_USER_VERSION.clone()))
+        .register(Box::new(FLEXLM_SERVER_STATUS.clone()))
         .unwrap();
 }
