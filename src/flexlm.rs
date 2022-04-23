@@ -35,6 +35,11 @@ lazy_static! {
         &["app", "fqdn", "master", "port", "version"],
     )
     .unwrap();
+    pub static ref FLEXLM_VENDOR_STATUS: IntGaugeVec = IntGaugeVec::new(
+        Opts::new("flexlm_vendor_status", "Status of the vendor daemon"),
+        &["app", "name", "version"],
+    )
+    .unwrap();
 }
 
 pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
@@ -44,6 +49,7 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
         static ref RE_LMSTAT_USERS_MULTI_LICENSE: Regex = Regex::new(r"^\s+(\w+) [\w.\-_]+\s+[a-zA-Z0-9/]+\s+\(([\w.\-_]+)\)\s+\([\w./\s]+\),\s+start [A-Z][a-z][a-z] \d+/\d+ \d+:\d+,\s+(\d+) licenses$").unwrap();
         static ref RE_LMSTAT_LICENSE_SERVER_STATUS: Regex = Regex::new(r"^License server status:\s+([\w.\-@,]+)$").unwrap();
         static ref RE_LMSTAT_SERVER_STATUS: Regex = Regex::new(r"([\w.\-]+):\s+license server (\w+)\s+(\(MASTER\))?\s*([\w.]+)").unwrap();
+        static ref RE_LMSTAT_VENDOR_STATUS: Regex = Regex::new(r"\s+(\w+):\s+(\w+)\s+([\w.]+)$").unwrap();
     }
 
     // dict -> "feature" -> "user" -> "version" -> count
@@ -214,6 +220,29 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
                 server_master.insert(server.to_string(), true);
             }
             server_version.insert(server.to_string(), version.to_string());
+        } else if let Some(capt) = RE_LMSTAT_VENDOR_STATUS.captures(line) {
+            if capt.len() != 4 {
+                error!(
+                    "Regular expression returns {} capture groups instead of 4",
+                    capt.len()
+                );
+                continue;
+            }
+            let vendor = capt.get(1).map_or("", |m| m.as_str());
+            let _status = capt.get(2).map_or("", |m| m.as_str());
+            let mut status: i64 = 0;
+            if _status == "UP" {
+                status = 1;
+            }
+            let version = capt.get(3).map_or("", |m| m.as_str());
+
+            debug!(
+                "flexlm.rs:fetch: Setting flexlm_vendor_status -> {} {} {} {}",
+                lic.name, vendor, version, status
+            );
+            FLEXLM_VENDOR_STATUS
+                .with_label_values(&[&lic.name, vendor, version])
+                .set(status);
         }
     }
 
@@ -269,5 +298,8 @@ pub fn register() {
         .unwrap();
     exporter::REGISTRY
         .register(Box::new(FLEXLM_SERVER_STATUS.clone()))
+        .unwrap();
+    exporter::REGISTRY
+        .register(Box::new(FLEXLM_VENDOR_STATUS.clone()))
         .unwrap();
 }
