@@ -4,7 +4,7 @@ use crate::license;
 
 use chrono::NaiveDateTime;
 use lazy_static::lazy_static;
-use log::{debug, error};
+use log::{debug, error, warn};
 use prometheus::{GaugeVec, IntGaugeVec, Opts};
 use regex::Regex;
 use simple_error::bail;
@@ -48,6 +48,14 @@ lazy_static! {
             "Time until license features will expire"
         ),
         &["app", "index", "licenses", "name", "vendor", "version"]
+    )
+    .unwrap();
+    pub static ref FLEXLM_FEATURE_AGGREGATED_EXPIRATION: GaugeVec = GaugeVec::new(
+        Opts::new(
+            "flexlm_feature_aggregate_expiration_seconds",
+            "Aggregated licenses by expiration time"
+        ),
+        &["app", "features", "index", "licenses"]
     )
     .unwrap();
 }
@@ -327,6 +335,8 @@ fn fetch_expiration(
     }
 
     let mut expiring = Vec::<LicenseExpiration>::new();
+    let mut aggregated_expiration: HashMap<String, Vec<LicenseExpiration>> = HashMap::new();
+    let mut expiration_dates = Vec::<f64>::new();
 
     // NOTE: lmutil lmstat -i queries the  local license file. To avoid stale data, we query the extracted
     //       license servers from  lmstat -c ... -a output instead.
@@ -399,11 +409,25 @@ fn fetch_expiration(
             }
 
             let vendor = capt.get(5).map_or("", |m| m.as_str());
+
+            expiration_dates.push(expiration);
             expiring.push(LicenseExpiration {
                 feature: feature.to_string(),
                 version: version.to_string(),
                 license_count: count,
-                expiration: expiration,
+                expiration,
+                vendor: vendor.to_string(),
+            });
+
+            let expiration_str = expiration.to_string();
+            let aggregated = aggregated_expiration
+                .entry(expiration_str)
+                .or_insert_with(Vec::<LicenseExpiration>::new);
+            aggregated.push(LicenseExpiration {
+                feature: feature.to_string(),
+                version: version.to_string(),
+                license_count: count,
+                expiration,
                 vendor: vendor.to_string(),
             });
         } else if let Some(capt) = RE_LMSTAT_ALTERNATIVE_EXPIRATION.captures(line) {
@@ -445,12 +469,25 @@ fn fetch_expiration(
                 };
             }
 
+            expiration_dates.push(expiration);
             let vendor = capt.get(4).map_or("", |m| m.as_str());
             expiring.push(LicenseExpiration {
                 feature: feature.to_string(),
                 version: version.to_string(),
                 license_count: count,
-                expiration: expiration,
+                expiration,
+                vendor: vendor.to_string(),
+            });
+
+            let expiration_str = expiration.to_string();
+            let aggregated = aggregated_expiration
+                .entry(expiration_str)
+                .or_insert_with(Vec::<LicenseExpiration>::new);
+            aggregated.push(LicenseExpiration {
+                feature: feature.to_string(),
+                version: version.to_string(),
+                license_count: count,
+                expiration,
                 vendor: vendor.to_string(),
             });
         }
@@ -480,6 +517,35 @@ fn fetch_expiration(
             .set(entry.expiration);
         index += 1;
     }
+
+    index = 0;
+
+    expiration_dates.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    expiration_dates.dedup_by(|a, b| a == b);
+
+    for exp in expiration_dates {
+        let exp_str = exp.to_string();
+        if let Some(v) = aggregated_expiration.get(&exp_str) {
+            let mut license_count: i64 = 0;
+            let mut feature_count: i64 = 0;
+            for entry in v {
+                license_count += entry.license_count;
+                feature_count += 1;
+            }
+            debug!("flexlm.rs:fetch_expiration: Setting flexlm_feature_aggregate_expiration_seconds -> {} {} {} {} {}", lic.name, feature_count, index, license_count, exp);
+            FLEXLM_FEATURE_AGGREGATED_EXPIRATION
+                .with_label_values(&[
+                    &lic.name,
+                    &feature_count.to_string(),
+                    &index.to_string(),
+                    &license_count.to_string(),
+                ])
+                .set(exp);
+            index += 1;
+        } else {
+            warn!("Key {} not found in HashMap aggregated", exp_str);
+        }
+    }
     Ok(())
 }
 
@@ -501,5 +567,8 @@ pub fn register() {
         .unwrap();
     exporter::REGISTRY
         .register(Box::new(FLEXLM_FEATURE_EXPIRATION.clone()))
+        .unwrap();
+    exporter::REGISTRY
+        .register(Box::new(FLEXLM_FEATURE_AGGREGATED_EXPIRATION.clone()))
         .unwrap();
 }
