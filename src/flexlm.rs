@@ -107,7 +107,12 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
     );
 
     if !cmd.status.success() {
-        bail!("{} command exited with non-normal exit code {}", lmutil, rc);
+        bail!(
+            "{} command exited with non-normal exit code {} for {}",
+            lmutil,
+            rc,
+            lic.name
+        );
     }
 
     let stdout = String::from_utf8(cmd.stdout)?;
@@ -276,12 +281,16 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
         }
     }
 
-    match fetch_expiration(lic, lmutil, license_server) {
-        Ok(_) => {}
-        Err(e) => {
-            error!("Unable to fetch expiration dates: {}", e);
-        }
-    };
+    if !license_server.is_empty() {
+        match fetch_expiration(lic, lmutil, license_server) {
+            Ok(_) => {}
+            Err(e) => {
+                error!("Unable to fetch expiration dates: {}", e);
+            }
+        };
+    } else {
+        warn!("No license server informaton received for {}", lic.name);
+    }
 
     for server in server_status.keys() {
         let status = server_status.get(server).unwrap_or(&0);
@@ -364,7 +373,12 @@ fn fetch_expiration(
     );
 
     if !cmd.status.success() {
-        bail!("{} command exited with non-normal exit code {}", lmutil, rc);
+        bail!(
+            "{} command exited with non-normal exit code {} for {}",
+            lmutil,
+            rc,
+            lic.name
+        );
     }
 
     let stdout = String::from_utf8(cmd.stdout)?;
