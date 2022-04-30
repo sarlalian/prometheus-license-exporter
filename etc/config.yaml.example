@@ -1,0 +1,18 @@
+---
+global:
+  # Default: 'lmutil'
+  lmutil: '/path/to/lmutil'
+
+# flexlm - List of FlexLM/FlexNet based licenses
+flexlm:
+    # name - Name of the license, mandatory
+  - name: 'license1'
+    # license - Path to license file or port@server
+    license: '/path/to/license/file or port@server'
+    # excluded_features - List of features to be excluded
+    excluded_features:
+      - 'excl_1'
+      - 'excl_2'
+    # export_user - Export user names, default is False
+    export_user: True
+
