@@ -14,5 +14,21 @@ flexlm:
       - 'excl_1'
       - 'excl_2'
     # export_user - Export user names, default is False
-    export_user: True
+    export_useV: True
+
+# rlm - List of RLM based licenses
+rlm:
+    # name - Name of the license, mandatory
+  - name: 'rlm_license'
+    # license - Query RLM license at port@server
+    # Note: For master/failover setups, the master server *MUST* come first!
+    license: 'port@server'
+    # isv - Name of the ISV to query. Mandatory because a RLM instance can host multiple ISV servers
+    isv: 'isv'
+    # excluded_features - List of features to be excluded
+    excluded_features:
+      - 'e1'
+      - 'e2'
+    # export_user - Export user names, default is False
+    export_useV: True
 

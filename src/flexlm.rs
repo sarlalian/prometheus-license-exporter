@@ -317,6 +317,10 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
         for (feat, uv) in fuv.iter() {
             for (user, v) in uv.iter() {
                 for (version, count) in v.iter() {
+                    if license::is_excluded(&lic.excluded_features, feat.to_string()) {
+                        debug!("flexlm.rs:fetch: Skipping feature {} because it is in excluded_features list of {}", feat, lic.name);
+                        continue;
+                    }
                     debug!(
                         "flexlm.rs:fetch: Setting flexlm_feature_used_users -> {} {} {} {} {}",
                         lic.name, feat, user, version, *count
@@ -509,6 +513,11 @@ fn fetch_expiration(
 
     let mut index: i64 = 1;
     for entry in expiring {
+        if license::is_excluded(&lic.excluded_features, entry.feature.to_string()) {
+            debug!("flexlm.rs:fetch: Skipping feature {} because it is in excluded_features list of {}", entry.feature, lic.name);
+            continue;
+        }
+
         debug!(
             "flexlm.rs:fetch: Setting flexlm_feature_used_users -> {} {} {} {} {} {} {}",
             lic.name,

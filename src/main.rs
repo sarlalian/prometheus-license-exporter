@@ -4,6 +4,7 @@ mod exporter;
 mod flexlm;
 mod license;
 mod logging;
+mod rlm;
 mod usage;
 
 use getopts::Options;
