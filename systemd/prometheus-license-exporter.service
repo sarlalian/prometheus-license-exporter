@@ -1,0 +1,14 @@
+[Unit]
+Description=Export license information to Prometheus
+After=network.target auditd.service sssd.service
+
+[Service]
+EnvironmentFile=-/etc/default/prometheus-license-exporter
+ExecStart=/usr/sbin/prometheus-license-exporter $OPTIONS
+Restart=on-failure
+User=prometheus
+Group=prometheus
+
+[Install]
+WantedBy=multi-user.target
+
