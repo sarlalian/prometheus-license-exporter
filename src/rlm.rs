@@ -24,6 +24,11 @@ lazy_static! {
         &["app", "name", "version"],
     )
     .unwrap();
+    pub static ref RLM_FEATURES_USER: IntGaugeVec = IntGaugeVec::new(
+        Opts::new("rlm_feature_used_users", "Number of licenses used by user"),
+        &["app", "name", "user", "version"],
+    )
+    .unwrap();
 }
 
 pub struct LicenseData {
@@ -227,6 +232,110 @@ pub fn fetch(lic: &config::RLM, rlmutil: &str) -> Result<(), Box<dyn Error>> {
                 .set(used);
         }
     }
+
+    if let Some(report_users) = lic.export_user {
+        if report_users {
+            match fetch_checkouts(lic, rlmutil) {
+                Ok(_) => {}
+                Err(e) => {
+                    error!("Unable to fetch expiration dates: {}", e);
+                }
+            };
+        }
+    }
+
+    Ok(())
+}
+
+fn fetch_checkouts(lic: &config::RLM, rlmutil: &str) -> Result<(), Box<dyn Error>> {
+    lazy_static! {
+        static ref RE_RLM_CHECKOUTS: Regex = Regex::new(r"^\s+([\w\-.]+)\s+(\w+):\s+([\w\-.@]+)\s+\d+/\d+\s+at\s+\d+/\d+\s+\d+:\d+\s+\(handle:\s+\w+\)$").unwrap();
+    }
+    // dict -> "feature" -> "user" -> "version" -> count
+    let mut fuv: HashMap<String, HashMap<String, HashMap<String, i64>>> = HashMap::new();
+
+    env::set_var("LANG", "C");
+    debug!(
+        "rlm.rs:fetch: Running {} -c {} -i {}",
+        rlmutil, &lic.license, &lic.isv
+    );
+    let cmd = Command::new(rlmutil)
+        .arg("rlmstat")
+        .arg("-c")
+        .arg(&lic.license)
+        .arg("-i")
+        .arg(&lic.isv)
+        .output()?;
+
+    let rc = match cmd.status.code() {
+        Some(v) => v,
+        None => {
+            bail!("Can't get return code of {} command", rlmutil);
+        }
+    };
+    debug!(
+        "rlm.rs:fetch: external command finished with exit code {}",
+        rc
+    );
+
+    if !cmd.status.success() {
+        bail!(
+            "{} command exited with non-normal exit code {} for {}",
+            rlmutil,
+            rc,
+            lic.name
+        );
+    }
+
+    let stdout = String::from_utf8(cmd.stdout)?;
+
+    for line in stdout.lines() {
+        if line.is_empty() {
+            continue;
+        }
+
+        if let Some(capt) = RE_RLM_CHECKOUTS.captures(line) {
+            if capt.len() != 4 {
+                error!(
+                    "Regular expression returns {} capture groups instead of 4",
+                    capt.len(),
+                );
+                continue;
+            }
+
+            let feature = capt.get(1).map_or("", |m| m.as_str());
+            let version = capt.get(2).map_or("", |m| m.as_str());
+            let _user: Vec<&str> = capt.get(3).map_or("", |m| m.as_str()).split('@').collect();
+            let user = _user[0];
+
+            let feat = fuv
+                .entry(feature.to_string())
+                .or_insert_with(HashMap::<String, HashMap<String, i64>>::new);
+            let usr = feat
+                .entry(user.to_string())
+                .or_insert_with(HashMap::<String, i64>::new);
+            *usr.entry(version.to_string()).or_insert(0) += 1;
+        }
+    }
+
+    for (feat, uv) in fuv.iter() {
+        for (user, v) in uv.iter() {
+            for (version, count) in v.iter() {
+                if license::is_excluded(&lic.excluded_features, feat.to_string()) {
+                    debug!("rlm.rs:fetch_checkouts: Skipping feature {} because it is in excluded_features list of {}", feat, lic.name);
+                    continue;
+                }
+                debug!(
+                    "rlm.rs:fetch: Setting rlm_feature_used_users -> {} {} {} {} {}",
+                    lic.name, feat, user, version, *count
+                );
+                RLM_FEATURES_USER
+                    .with_label_values(&[&lic.name, feat, user, version])
+                    .set(*count);
+            }
+        }
+    }
+
     Ok(())
 }
 
@@ -236,5 +345,8 @@ pub fn register() {
         .unwrap();
     exporter::REGISTRY
         .register(Box::new(RLM_FEATURES_USED.clone()))
+        .unwrap();
+    exporter::REGISTRY
+        .register(Box::new(RLM_FEATURES_USER.clone()))
         .unwrap();
 }

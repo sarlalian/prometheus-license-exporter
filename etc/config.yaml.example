@@ -14,7 +14,7 @@ flexlm:
       - 'excl_1'
       - 'excl_2'
     # export_user - Export user names, default is False
-    export_useV: True
+    export_user: True
 
 # rlm - List of RLM based licenses
 rlm:
@@ -30,5 +30,5 @@ rlm:
       - 'e1'
       - 'e2'
     # export_user - Export user names, default is False
-    export_useV: True
+    export_user: True
 
