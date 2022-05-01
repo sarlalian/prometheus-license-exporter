@@ -7,7 +7,7 @@ use std::fs;
 pub struct Configuration {
     pub global: Option<GlobalConfiguration>,
     pub flexlm: Option<Vec<FlexLM>>,
-    pub rlm: Option<Vec<RLM>>,
+    pub rlm: Option<Vec<Rlm>>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -25,7 +25,7 @@ pub struct FlexLM {
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct RLM {
+pub struct Rlm {
     pub name: String,
     pub license: String,
     pub excluded_features: Option<Vec<String>>,

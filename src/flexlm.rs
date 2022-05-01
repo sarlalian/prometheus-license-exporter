@@ -87,7 +87,10 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
     let mut license_server = String::new();
 
     env::set_var("LANG", "C");
-    debug!("flexlm.rs:fetch: Running {} -c {} -a", lmutil, &lic.license);
+    debug!(
+        "flexlm.rs:fetch: Running {} lmstat -c {} -a",
+        lmutil, &lic.license
+    );
     let cmd = Command::new(lmutil)
         .arg("lmstat")
         .arg("-c")
@@ -131,6 +134,8 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
                 );
                 continue;
             }
+
+            debug!("flexlm.rs:fetch: RE_LMSTAT_USAGE match on '{}'", line);
 
             feature = capt.get(1).map_or("", |m| m.as_str());
             let _total = capt.get(2).map_or("", |m| m.as_str());
@@ -181,6 +186,11 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
                 continue;
             }
 
+            debug!(
+                "flexlm.rs:fetch: RE_LMSTAT_USERS_SINGLE_LICENSE match on '{}'",
+                line
+            );
+
             let user = capt.get(1).map_or("", |m| m.as_str());
             let version = capt.get(2).map_or("", |m| m.as_str());
 
@@ -199,6 +209,11 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
                 );
                 continue;
             }
+
+            debug!(
+                "flexlm.rs:fetch: RE_LMSTAT_USERS_MULTI_LICENSE match on '{}'",
+                line
+            );
 
             let user = capt.get(1).map_or("", |m| m.as_str());
             let version = capt.get(2).map_or("", |m| m.as_str());
@@ -226,6 +241,12 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
                 );
                 continue;
             }
+
+            debug!(
+                "flexlm.rs:fetch: RE_LMSTAT_LICENSE_SERVER_STATUS match on '{}'",
+                line
+            );
+
             let status_line = capt.get(1).map_or("", |m| m.as_str());
             license_server = status_line.to_string();
 
@@ -244,6 +265,12 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
                 );
                 continue;
             }
+
+            debug!(
+                "flexlm.rs:fetch: RE_LMSTAT_SERVER_STATUS match on '{}'",
+                line
+            );
+
             let server = capt.get(1).map_or("", |m| m.as_str());
             let status = capt.get(2).map_or("", |m| m.as_str());
             let master = capt.get(3).map_or("", |m| m.as_str());
@@ -263,6 +290,12 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
                 );
                 continue;
             }
+
+            debug!(
+                "flexlm.rs:fetch: RE_LMSTAT_VENDOR_STATUS match on '{}'",
+                line
+            );
+
             let vendor = capt.get(1).map_or("", |m| m.as_str());
             let _status = capt.get(2).map_or("", |m| m.as_str());
             let mut status: i64 = 0;
@@ -355,7 +388,7 @@ fn fetch_expiration(
     //       license servers from  lmstat -c ... -a output instead.
     env::set_var("LANG", "C");
     debug!(
-        "flexlm.rs:fetch: Running {} -c {} -i",
+        "flexlm.rs:fetch: Running {} lmstat -c {} -i",
         lmutil, license_server
     );
     let cmd = Command::new(lmutil)
@@ -395,6 +428,12 @@ fn fetch_expiration(
                 );
                 continue;
             }
+
+            debug!(
+                "flexlm.rs:fetch_expiration: RE_LMSTAT_EXPIRATION match on '{}'",
+                line
+            );
+
             let feature = capt.get(1).map_or("", |m| m.as_str());
             let version = capt.get(2).map_or("", |m| m.as_str());
             let _count = capt.get(3).map_or("", |m| m.as_str());
@@ -456,6 +495,12 @@ fn fetch_expiration(
                 );
                 continue;
             }
+
+            debug!(
+                "flexlm.rs:fetch_expiration: RE_LMSTAT_ALTERNATIVE_EXPIRATION match on '{}'",
+                line
+            );
+
             let feature = capt.get(1).map_or("", |m| m.as_str());
             let version = capt.get(2).map_or("", |m| m.as_str());
             let _count = capt.get(3).map_or("", |m| m.as_str());

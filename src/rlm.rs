@@ -29,6 +29,22 @@ lazy_static! {
         &["app", "name", "user", "version"],
     )
     .unwrap();
+    pub static ref RLM_FEATURE_EXPIRATION: GaugeVec = GaugeVec::new(
+        Opts::new(
+            "rlm_feature_expiration_seconds",
+            "Time until license features will expire"
+        ),
+        &["app", "index", "licenses", "name", "version"]
+    )
+    .unwrap();
+    pub static ref RLM_FEATURE_AGGREGATED_EXPIRATION: GaugeVec = GaugeVec::new(
+        Opts::new(
+            "rlm_feature_aggregate_expiration_seconds",
+            "Aggregated licenses by expiration time"
+        ),
+        &["app", "features", "index", "licenses"]
+    )
+    .unwrap();
 }
 
 pub struct LicenseData {
@@ -40,9 +56,10 @@ pub struct LicenseData {
     pub used: i64,
 }
 
-pub fn fetch(lic: &config::RLM, rlmutil: &str) -> Result<(), Box<dyn Error>> {
+pub fn fetch(lic: &config::Rlm, rlmutil: &str) -> Result<(), Box<dyn Error>> {
     lazy_static! {
-        static ref RE_RLM_FEATURE_VERSION: Regex = Regex::new(r"^\s+([\w\-.]+)\s(\w+)$").unwrap();
+        static ref RE_RLM_FEATURE_VERSION: Regex =
+            Regex::new(r"^\s+([\w\-.]+)\s([\w.]+)$").unwrap();
         static ref RE_RLM_USAGE: Regex = Regex::new(
             r"^\s+count:\s+(\d+),\s+# reservations:\s+(\d+),\s+inuse:\s+(\d+), exp:\s+([\w\-]+)"
         )
@@ -57,7 +74,7 @@ pub fn fetch(lic: &config::RLM, rlmutil: &str) -> Result<(), Box<dyn Error>> {
 
     env::set_var("LANG", "C");
     debug!(
-        "rlm.rs:fetch: Running {} -c {} -l {}",
+        "rlm.rs:fetch: Running {} rlmstat -c {} -l {}",
         rlmutil, &lic.license, &lic.isv
     );
     let cmd = Command::new(rlmutil)
@@ -106,6 +123,8 @@ pub fn fetch(lic: &config::RLM, rlmutil: &str) -> Result<(), Box<dyn Error>> {
                 continue;
             }
 
+            debug!("rlm.rs:fetch: RE_RLM_FEATURE_VERSION match on '{}'", line);
+
             feature = capt.get(1).map_or("", |m| m.as_str());
             version = capt.get(2).map_or("", |m| m.as_str());
 
@@ -127,6 +146,8 @@ pub fn fetch(lic: &config::RLM, rlmutil: &str) -> Result<(), Box<dyn Error>> {
                 );
                 continue;
             }
+
+            debug!("rlm.rs:fetch: RE_RLM_USAGE match on '{}'", line);
 
             let _total = capt.get(1).map_or("", |m| m.as_str());
             let total: i64 = match _total.parse() {
@@ -230,6 +251,8 @@ pub fn fetch(lic: &config::RLM, rlmutil: &str) -> Result<(), Box<dyn Error>> {
             RLM_FEATURES_USED
                 .with_label_values(&[&lic.name, feature, version])
                 .set(used);
+        } else {
+            debug!("rlm.rs:fetch: No regexp matches '{}'", line);
         }
     }
 
@@ -244,19 +267,79 @@ pub fn fetch(lic: &config::RLM, rlmutil: &str) -> Result<(), Box<dyn Error>> {
         }
     }
 
+    let mut index: i64 = 1;
+    for entry in expiring {
+        if license::is_excluded(&lic.excluded_features, entry.feature.to_string()) {
+            debug!(
+                "rlm.rs:fetch: Skipping feature {} because it is in excluded_features list of {}",
+                entry.feature, lic.name
+            );
+            continue;
+        }
+
+        debug!(
+            "rlm.rs:fetch: Setting rlm_feature_used_users -> {} {} {} {} {} {}",
+            lic.name,
+            index,
+            entry.total.to_string(),
+            entry.feature,
+            entry.version,
+            entry.expiration
+        );
+        RLM_FEATURE_EXPIRATION
+            .with_label_values(&[
+                &lic.name,
+                &index.to_string(),
+                &entry.total.to_string(),
+                &entry.feature,
+                &entry.version,
+            ])
+            .set(entry.expiration);
+        index += 1;
+    }
+
+    index = 0;
+
+    expiration_dates.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    expiration_dates.dedup_by(|a, b| a == b);
+
+    for exp in expiration_dates {
+        let exp_str = exp.to_string();
+        if let Some(v) = aggregated_expiration.get(&exp_str) {
+            let mut license_count: i64 = 0;
+            let mut feature_count: i64 = 0;
+            for entry in v {
+                license_count += entry.total;
+                feature_count += 1;
+            }
+            debug!("rlm.rs:fetch_expiration: Setting rlm_feature_aggregate_expiration_seconds -> {} {} {} {} {}", lic.name, feature_count, index, license_count, exp);
+            RLM_FEATURE_AGGREGATED_EXPIRATION
+                .with_label_values(&[
+                    &lic.name,
+                    &feature_count.to_string(),
+                    &index.to_string(),
+                    &license_count.to_string(),
+                ])
+                .set(exp);
+            index += 1;
+        } else {
+            warn!("Key {} not found in HashMap aggregated", exp_str);
+        }
+    }
+
     Ok(())
 }
 
-fn fetch_checkouts(lic: &config::RLM, rlmutil: &str) -> Result<(), Box<dyn Error>> {
+fn fetch_checkouts(lic: &config::Rlm, rlmutil: &str) -> Result<(), Box<dyn Error>> {
     lazy_static! {
-        static ref RE_RLM_CHECKOUTS: Regex = Regex::new(r"^\s+([\w\-.]+)\s+(\w+):\s+([\w\-.@]+)\s+\d+/\d+\s+at\s+\d+/\d+\s+\d+:\d+\s+\(handle:\s+\w+\)$").unwrap();
+        static ref RE_RLM_CHECKOUTS: Regex = Regex::new(r"^\s+([\w\-.]+)\s+([\w.]+):\s+([\w\-.@]+)\s+\d+/\d+\s+at\s+\d+/\d+\s+\d+:\d+\s+\(handle:\s+\w+\)$").unwrap();
     }
     // dict -> "feature" -> "user" -> "version" -> count
     let mut fuv: HashMap<String, HashMap<String, HashMap<String, i64>>> = HashMap::new();
 
     env::set_var("LANG", "C");
     debug!(
-        "rlm.rs:fetch: Running {} -c {} -i {}",
+        "rlm.rs:fetch: Running {} rlmstat -c {} -i {}",
         rlmutil, &lic.license, &lic.isv
     );
     let cmd = Command::new(rlmutil)
@@ -303,6 +386,11 @@ fn fetch_checkouts(lic: &config::RLM, rlmutil: &str) -> Result<(), Box<dyn Error
                 continue;
             }
 
+            debug!(
+                "rlm.rs:fetch_checkouts: RE_RLM_FEATURE_VERSION match on '{}'",
+                line
+            );
+
             let feature = capt.get(1).map_or("", |m| m.as_str());
             let version = capt.get(2).map_or("", |m| m.as_str());
             let _user: Vec<&str> = capt.get(3).map_or("", |m| m.as_str()).split('@').collect();
@@ -315,6 +403,8 @@ fn fetch_checkouts(lic: &config::RLM, rlmutil: &str) -> Result<(), Box<dyn Error
                 .entry(user.to_string())
                 .or_insert_with(HashMap::<String, i64>::new);
             *usr.entry(version.to_string()).or_insert(0) += 1;
+        } else {
+            debug!("rlm.rs:fetch_checkouts: No regexp matches '{}'", line);
         }
     }
 
@@ -348,5 +438,11 @@ pub fn register() {
         .unwrap();
     exporter::REGISTRY
         .register(Box::new(RLM_FEATURES_USER.clone()))
+        .unwrap();
+    exporter::REGISTRY
+        .register(Box::new(RLM_FEATURE_EXPIRATION.clone()))
+        .unwrap();
+    exporter::REGISTRY
+        .register(Box::new(RLM_FEATURE_AGGREGATED_EXPIRATION.clone()))
         .unwrap();
 }
