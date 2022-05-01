@@ -311,6 +311,8 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
             FLEXLM_VENDOR_STATUS
                 .with_label_values(&[&lic.name, vendor, version])
                 .set(status);
+        } else {
+            debug!("flexlm.rs:fetch: No regexp matches '{}'", line);
         }
     }
 
@@ -553,6 +555,8 @@ fn fetch_expiration(
                 expiration,
                 vendor: vendor.to_string(),
             });
+        } else {
+            debug!("lexlm.rs:fetch_expiration: No regexp matches '{}'", line);
         }
     }
 
