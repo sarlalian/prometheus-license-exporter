@@ -45,6 +45,11 @@ lazy_static! {
         &["app", "features", "index", "licenses"]
     )
     .unwrap();
+    pub static ref RLM_SERVER_STATUS: IntGaugeVec = IntGaugeVec::new(
+        Opts::new("rlm_server_status", "Status of license server(s)"),
+        &["app", "fqdn", "port", "version"],
+    )
+    .unwrap();
 }
 
 pub struct LicenseData {
@@ -261,11 +266,18 @@ pub fn fetch(lic: &config::Rlm, rlmutil: &str) -> Result<(), Box<dyn Error>> {
             match fetch_checkouts(lic, rlmutil) {
                 Ok(_) => {}
                 Err(e) => {
-                    error!("Unable to fetch expiration dates: {}", e);
+                    error!("Unable to fetch license checkouts: {}", e);
                 }
             };
         }
     }
+
+    match fetch_status(lic, rlmutil) {
+        Ok(_) => {}
+        Err(e) => {
+            error!("Unable to fetch server status: {}", e);
+        }
+    };
 
     let mut index: i64 = 1;
     for entry in expiring {
@@ -416,7 +428,7 @@ fn fetch_checkouts(lic: &config::Rlm, rlmutil: &str) -> Result<(), Box<dyn Error
                     continue;
                 }
                 debug!(
-                    "rlm.rs:fetch: Setting rlm_feature_used_users -> {} {} {} {} {}",
+                    "rlm.rs:fetch_checkouts: Setting rlm_feature_used_users -> {} {} {} {} {}",
                     lic.name, feat, user, version, *count
                 );
                 RLM_FEATURES_USER
@@ -424,6 +436,103 @@ fn fetch_checkouts(lic: &config::Rlm, rlmutil: &str) -> Result<(), Box<dyn Error
                     .set(*count);
             }
         }
+    }
+
+    Ok(())
+}
+
+fn fetch_status(lic: &config::Rlm, rlmutil: &str) -> Result<(), Box<dyn Error>> {
+    lazy_static! {
+        static ref RE_RLM_STATUS: Regex =
+            Regex::new(r"^\s+[\w+\-.]+ ISV server status on [\w\-.]+ \(port (\d+)\), (\w+).*$")
+                .unwrap();
+        static ref RE_RLM_VERSION: Regex =
+            Regex::new(r"^\s+[\w+\-.]+ software version ([\w\s.:\-()]+)$").unwrap();
+    }
+
+    for server in lic.license.split(':') {
+        env::set_var("LANG", "C");
+        debug!(
+            "rlm.rs:fetch_statush: Running {} rlmstat -c {} -l {}",
+            rlmutil, &lic.license, &lic.isv
+        );
+        let cmd = Command::new(rlmutil)
+            .arg("rlmstat")
+            .arg("-c")
+            .arg(server)
+            .arg("-l")
+            .arg(&lic.isv)
+            .output()?;
+
+        let rc = match cmd.status.code() {
+            Some(v) => v,
+            None => {
+                bail!("Can't get return code of {} command", rlmutil);
+            }
+        };
+        debug!(
+            "rlm.rs:fetch_status: external command finished with exit code {}",
+            rc
+        );
+
+        if !cmd.status.success() {
+            bail!(
+                "{} command exited with non-normal exit code {} for {}",
+                rlmutil,
+                rc,
+                lic.name
+            );
+        }
+
+        let stdout = String::from_utf8(cmd.stdout)?;
+        let mut port: &str = "";
+        let mut status: i64 = 0;
+        let mut version: &str = "";
+        for line in stdout.lines() {
+            if line.is_empty() {
+                continue;
+            }
+
+            if let Some(capt) = RE_RLM_STATUS.captures(line) {
+                if capt.len() != 3 {
+                    error!(
+                        "Regular expression returns {} capture groups instead of 3",
+                        capt.len(),
+                    );
+                    continue;
+                }
+
+                debug!("rlm.rs:fetch_status: RE_RLM_STATUS match on '{}'", line);
+
+                port = capt.get(1).map_or("", |m| m.as_str());
+                let _status = capt.get(2).map_or("", |m| m.as_str());
+                if _status.to_lowercase() == "up" {
+                    status = 1;
+                }
+            } else if let Some(capt) = RE_RLM_VERSION.captures(line) {
+                if capt.len() != 3 {
+                    error!(
+                        "Regular expression returns {} capture groups instead of 3",
+                        capt.len(),
+                    );
+                    continue;
+                }
+
+                debug!("rlm.rs:fetch_status: RE_RLM_VERSION match on '{}'", line);
+
+                version = capt.get(1).map_or("", |m| m.as_str());
+            } else {
+                debug!("rlm.rs:fetch_status: No regexp matches '{}'", line);
+            }
+        }
+
+        debug!(
+            "rlm.rs:fetch_status: Setting rlm_server_status {} {} {} {} -> {}",
+            lic.name, server, port, version, status
+        );
+        RLM_SERVER_STATUS
+            .with_label_values(&[&lic.name, server, port, version])
+            .set(status);
     }
 
     Ok(())
@@ -444,5 +553,8 @@ pub fn register() {
         .unwrap();
     exporter::REGISTRY
         .register(Box::new(RLM_FEATURE_AGGREGATED_EXPIRATION.clone()))
+        .unwrap();
+    exporter::REGISTRY
+        .register(Box::new(RLM_SERVER_STATUS.clone()))
         .unwrap();
 }
