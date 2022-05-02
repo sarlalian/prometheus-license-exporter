@@ -349,20 +349,22 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
     }
 
     if lic.export_user.is_some() {
-        for (feat, uv) in fuv.iter() {
-            for (user, v) in uv.iter() {
-                for (version, count) in v.iter() {
-                    if license::is_excluded(&lic.excluded_features, feat.to_string()) {
-                        debug!("flexlm.rs:fetch: Skipping feature {} because it is in excluded_features list of {}", feat, lic.name);
-                        continue;
+        if lic.export_user {
+            for (feat, uv) in fuv.iter() {
+                for (user, v) in uv.iter() {
+                    for (version, count) in v.iter() {
+                        if license::is_excluded(&lic.excluded_features, feat.to_string()) {
+                            debug!("flexlm.rs:fetch: Skipping feature {} because it is in excluded_features list of {}", feat, lic.name);
+                            continue;
+                        }
+                        debug!(
+                            "flexlm.rs:fetch: Setting flexlm_feature_used_users -> {} {} {} {} {}",
+                            lic.name, feat, user, version, *count
+                        );
+                        FLEXLM_FEATURES_USER
+                            .with_label_values(&[&lic.name, feat, user, version])
+                            .set(*count);
                     }
-                    debug!(
-                        "flexlm.rs:fetch: Setting flexlm_feature_used_users -> {} {} {} {} {}",
-                        lic.name, feat, user, version, *count
-                    );
-                    FLEXLM_FEATURES_USER
-                        .with_label_values(&[&lic.name, feat, user, version])
-                        .set(*count);
                 }
             }
         }
