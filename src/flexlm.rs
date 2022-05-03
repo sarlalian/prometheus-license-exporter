@@ -60,7 +60,7 @@ lazy_static! {
     .unwrap();
 }
 
-pub struct LicenseExpiration {
+pub struct FlexLMLicenseExpiration {
     pub feature: String,
     pub version: String,
     pub license_count: i64,
@@ -348,8 +348,8 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
             .set(*status);
     }
 
-    if lic.export_user.is_some() {
-        if lic.export_user {
+    if let Some(export_user) = lic.export_user {
+        if export_user {
             for (feat, uv) in fuv.iter() {
                 for (user, v) in uv.iter() {
                     for (version, count) in v.iter() {
@@ -384,8 +384,8 @@ fn fetch_expiration(
         static ref RE_LMSTAT_ALTERNATIVE_EXPIRATION: Regex = Regex::new(r"^([\w\-+]+)\s+([\d.]+)\s+(\d+)\s+(\w+)\s+([\w-]+)$").unwrap();
     }
 
-    let mut expiring = Vec::<LicenseExpiration>::new();
-    let mut aggregated_expiration: HashMap<String, Vec<LicenseExpiration>> = HashMap::new();
+    let mut expiring = Vec::<FlexLMLicenseExpiration>::new();
+    let mut aggregated_expiration: HashMap<String, Vec<FlexLMLicenseExpiration>> = HashMap::new();
     let mut expiration_dates = Vec::<f64>::new();
 
     // NOTE: lmutil lmstat -i queries the  local license file. To avoid stale data, we query the extracted
@@ -472,7 +472,7 @@ fn fetch_expiration(
             let vendor = capt.get(5).map_or("", |m| m.as_str());
 
             expiration_dates.push(expiration);
-            expiring.push(LicenseExpiration {
+            expiring.push(FlexLMLicenseExpiration {
                 feature: feature.to_string(),
                 version: version.to_string(),
                 license_count: count,
@@ -483,8 +483,8 @@ fn fetch_expiration(
             let expiration_str = expiration.to_string();
             let aggregated = aggregated_expiration
                 .entry(expiration_str)
-                .or_insert_with(Vec::<LicenseExpiration>::new);
-            aggregated.push(LicenseExpiration {
+                .or_insert_with(Vec::<FlexLMLicenseExpiration>::new);
+            aggregated.push(FlexLMLicenseExpiration {
                 feature: feature.to_string(),
                 version: version.to_string(),
                 license_count: count,
@@ -538,7 +538,7 @@ fn fetch_expiration(
 
             expiration_dates.push(expiration);
             let vendor = capt.get(4).map_or("", |m| m.as_str());
-            expiring.push(LicenseExpiration {
+            expiring.push(FlexLMLicenseExpiration {
                 feature: feature.to_string(),
                 version: version.to_string(),
                 license_count: count,
@@ -549,8 +549,8 @@ fn fetch_expiration(
             let expiration_str = expiration.to_string();
             let aggregated = aggregated_expiration
                 .entry(expiration_str)
-                .or_insert_with(Vec::<LicenseExpiration>::new);
-            aggregated.push(LicenseExpiration {
+                .or_insert_with(Vec::<FlexLMLicenseExpiration>::new);
+            aggregated.push(FlexLMLicenseExpiration {
                 feature: feature.to_string(),
                 version: version.to_string(),
                 license_count: count,

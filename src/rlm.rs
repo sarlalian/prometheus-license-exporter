@@ -52,7 +52,7 @@ lazy_static! {
     .unwrap();
 }
 
-pub struct LicenseData {
+pub struct RlmLicenseData {
     pub feature: String,
     pub version: String,
     pub expiration: f64,
@@ -72,9 +72,9 @@ pub fn fetch(lic: &config::Rlm, rlmutil: &str) -> Result<(), Box<dyn Error>> {
     }
 
     // feature -> version = usage
-    let mut fv: HashMap<String, HashMap<String, HashMap<String, LicenseData>>> = HashMap::new();
-    let mut expiring = Vec::<LicenseData>::new();
-    let mut aggregated_expiration: HashMap<String, Vec<LicenseData>> = HashMap::new();
+    let mut fv: HashMap<String, HashMap<String, HashMap<String, RlmLicenseData>>> = HashMap::new();
+    let mut expiring = Vec::<RlmLicenseData>::new();
+    let mut aggregated_expiration: HashMap<String, Vec<RlmLicenseData>> = HashMap::new();
     let mut expiration_dates = Vec::<f64>::new();
 
     env::set_var("LANG", "C");
@@ -200,7 +200,7 @@ pub fn fetch(lic: &config::Rlm, rlmutil: &str) -> Result<(), Box<dyn Error>> {
             }
 
             expiration_dates.push(expiration);
-            expiring.push(LicenseData {
+            expiring.push(RlmLicenseData {
                 feature: feature.to_string(),
                 version: version.to_string(),
                 expiration,
@@ -212,8 +212,8 @@ pub fn fetch(lic: &config::Rlm, rlmutil: &str) -> Result<(), Box<dyn Error>> {
             let expiration_str = expiration.to_string();
             let aggregated = aggregated_expiration
                 .entry(expiration_str)
-                .or_insert_with(Vec::<LicenseData>::new);
-            aggregated.push(LicenseData {
+                .or_insert_with(Vec::<RlmLicenseData>::new);
+            aggregated.push(RlmLicenseData {
                 feature: feature.to_string(),
                 version: version.to_string(),
                 expiration,
@@ -224,14 +224,14 @@ pub fn fetch(lic: &config::Rlm, rlmutil: &str) -> Result<(), Box<dyn Error>> {
 
             let feat = fv
                 .entry(feature.to_string())
-                .or_insert_with(HashMap::<String, HashMap<String, LicenseData>>::new);
+                .or_insert_with(HashMap::<String, HashMap<String, RlmLicenseData>>::new);
             let ver = feat
                 .entry(feature.to_string())
-                .or_insert_with(HashMap::<String, LicenseData>::new);
+                .or_insert_with(HashMap::<String, RlmLicenseData>::new);
 
             ver.insert(
                 version.to_string(),
-                LicenseData {
+                RlmLicenseData {
                     feature: feature.to_string(),
                     version: version.to_string(),
                     expiration,
