@@ -125,9 +125,8 @@ pub fn fetch(lic: &config::Lmx, lmxendutil: &str) -> Result<(), Box<dyn Error>> 
     let mut fuv: HashMap<String, HashMap<String, HashMap<String, i64>>> = HashMap::new();
     let mut server_port: HashMap<String, String> = HashMap::new();
     let mut server_master: HashMap<String, bool> = HashMap::new();
-    let mut i: u8 = 0;
 
-    for lserver in lic.license.split(':') {
+    for (i, lserver) in lic.license.split(':').enumerate() {
         let mut port = "6200".to_string();
         let srv: String;
 
@@ -148,7 +147,6 @@ pub fn fetch(lic: &config::Lmx, lmxendutil: &str) -> Result<(), Box<dyn Error>> 
                 server_master.insert(srv.clone(), false);
             }
         };
-        i += 1;
     }
 
     /*

@@ -94,11 +94,8 @@ fn validate_configuration(cfg: &Configuration) -> Result<(), Box<dyn Error>> {
             }
 
             for lsrv in _lmx.license.split(':') {
-                if lsrv.contains('@') {
-                    let srvport: Vec<&str> = lsrv.split('@').collect();
-                    if srvport.len() != 2 {
-                        bail!("Invalid license for LM-X license {}", _lmx.name);
-                    }
+                if lsrv.contains('@') && lsrv.split('@').count() != 2 {
+                    bail!("Invalid license for LM-X license {}", _lmx.name);
                 }
             }
 
