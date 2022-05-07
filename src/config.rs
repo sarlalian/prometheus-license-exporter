@@ -7,12 +7,14 @@ use std::fs;
 pub struct Configuration {
     pub global: Option<GlobalConfiguration>,
     pub flexlm: Option<Vec<FlexLM>>,
+    pub lmx: Option<Vec<Lmx>>,
     pub rlm: Option<Vec<Rlm>>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct GlobalConfiguration {
     pub lmutil: Option<String>,
+    pub lmxendutil: Option<String>,
     pub rlmutil: Option<String>,
 }
 
@@ -31,6 +33,14 @@ pub struct Rlm {
     pub excluded_features: Option<Vec<String>>,
     pub export_user: Option<bool>,
     pub isv: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct Lmx {
+    pub name: String,
+    pub license: String,
+    pub excluded_features: Option<Vec<String>>,
+    pub export_user: Option<bool>,
 }
 
 pub fn parse_config_file(f: &str) -> Result<Configuration, Box<dyn Error>> {
@@ -69,6 +79,34 @@ fn validate_configuration(cfg: &Configuration) -> Result<(), Box<dyn Error>> {
             }
             if _rlm.isv.is_empty() {
                 bail!("Missing ISV for RLM license {}", _rlm.name);
+            }
+        }
+    }
+
+    if let Some(lmx) = &cfg.lmx {
+        for _lmx in lmx {
+            if _lmx.name.is_empty() {
+                bail!("Empty name for LM-X license");
+            }
+
+            if _lmx.license.is_empty() {
+                bail!("Missing license information for LM-X license {}", _lmx.name);
+            }
+
+            for lsrv in _lmx.license.split(':') {
+                if lsrv.contains('@') {
+                    let srvport: Vec<&str> = lsrv.split('@').collect();
+                    if srvport.len() != 2 {
+                        bail!("Invalid license for LM-X license {}", _lmx.name);
+                    }
+                }
+            }
+
+            if _lmx.license.contains(':') {
+                let srvcnt: Vec<&str> = _lmx.license.split(':').collect();
+                if srvcnt.len() != 3 {
+                    bail!("Only three servers are allowed for LM-X HAL servers instead of {} for license {}", srvcnt.len(), _lmx.name);
+                }
             }
         }
     }

@@ -1,6 +1,7 @@
 use crate::config;
 use crate::constants;
 use crate::flexlm;
+use crate::lmx;
 use crate::rlm;
 
 use lazy_static::lazy_static;
@@ -24,6 +25,12 @@ pub fn register(cfg: &config::Configuration) {
             rlm::register()
         }
     }
+
+    if let Some(lmx) = &cfg.lmx {
+        if !lmx.is_empty() {
+            lmx::register()
+        }
+    }
 }
 
 pub fn metrics(cfg: &config::Configuration) -> String {
@@ -31,7 +38,6 @@ pub fn metrics(cfg: &config::Configuration) -> String {
     let mut buffer = String::new();
 
     if let Some(flexlm) = &cfg.flexlm {
-        // XXX: It's not neccessary to get lmutil every time ...
         let mut lmutil = constants::DEFAULT_LMUTIL.to_string();
         if let Some(glob) = cfg.global.clone() {
             if let Some(_lmutil) = glob.lmutil {
@@ -53,7 +59,6 @@ pub fn metrics(cfg: &config::Configuration) -> String {
     }
 
     if let Some(rlm) = &cfg.rlm {
-        // XXX: It's not neccessary to get lmutil every time ...
         let mut rlmutil = constants::DEFAULT_RLMUTIL.to_string();
         if let Some(glob) = cfg.global.clone() {
             if let Some(_rlmutil) = glob.rlmutil {
@@ -68,6 +73,27 @@ pub fn metrics(cfg: &config::Configuration) -> String {
                     error!(
                         "Can't fetch RLM license information for {}: {}",
                         _rlm.name, e
+                    );
+                }
+            };
+        }
+    }
+
+    if let Some(lmx) = &cfg.lmx {
+        let mut lmxendutil = constants::DEFAULT_LMXENDUTIL.to_string();
+        if let Some(glob) = cfg.global.clone() {
+            if let Some(_lmxendutil) = glob.lmxendutil {
+                lmxendutil = _lmxendutil;
+            }
+        }
+
+        for _lmx in lmx {
+            match lmx::fetch(_lmx, &lmxendutil) {
+                Ok(_) => {}
+                Err(e) => {
+                    error!(
+                        "Can't fetch LM-X license information for {}: {}",
+                        _lmx.name, e
                     );
                 }
             };

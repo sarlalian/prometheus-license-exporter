@@ -3,6 +3,7 @@ mod constants;
 mod exporter;
 mod flexlm;
 mod license;
+mod lmx;
 mod logging;
 mod rlm;
 mod usage;
