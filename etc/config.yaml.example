@@ -1,7 +1,26 @@
 ---
 global:
+	# Default: 'DSLicSrv'
+	dslicsrv: '/path/to/DSLicSrv'
+	# Default: 'lmxendutil'
+	lmxendutil: '/path/to/lmxendutil'
   # Default: 'lmutil'
   lmutil: '/path/to/lmutil'
+	# Default: 'rlmutil'
+	rlmutil: '/path/to/rlmutil'
+
+# dsls - List of DSLS based licenses
+dsls:
+    # name - Name of the license, mandatory
+  - name: 'dsls_license'
+     # license - Query DSLS license at port@server, multiple servers for a high availability setup can be separted by ':'
+    license: 'port@server1:port@server2:port@server3'
+    # excluded_features - List of features to be excluded
+    excluded_features:
+      - 'e1'
+      - 'e2'
+    # export_user - Export user names, default is False
+    export_user: True
 
 # flexlm - List of FlexLM/FlexNet based licenses
 flexlm:
@@ -13,6 +32,19 @@ flexlm:
     excluded_features:
       - 'excl_1'
       - 'excl_2'
+    # export_user - Export user names, default is False
+    export_user: True
+
+# lmx - List of LM-X based licenses
+lmx:
+    # name - Name of the license, mandatory
+  - name: 'lmx_license'
+     # license - Query RLM license at port@server, see note below about LM-X and high available licenses
+    license: 'port@server1:port@server2:port@server3'
+    # excluded_features - List of features to be excluded
+    excluded_features:
+      - 'e1'
+      - 'e2'
     # export_user - Export user names, default is False
     export_user: True
 
@@ -31,4 +63,3 @@ rlm:
       - 'e2'
     # export_user - Export user names, default is False
     export_user: True
-

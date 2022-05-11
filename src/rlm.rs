@@ -134,7 +134,7 @@ pub fn fetch(lic: &config::Rlm, rlmutil: &str) -> Result<(), Box<dyn Error>> {
             version = capt.get(2).map_or("", |m| m.as_str());
 
             if license::is_excluded(&lic.excluded_features, feature.to_string()) {
-                debug!("flexlm.rs:fetch: Skipping feature {} because it is in excluded_features list of {}", feature, lic.name);
+                debug!("rlm.rs:fetch: Skipping feature {} because it is in excluded_features list of {}", feature, lic.name);
                 feature = "";
                 continue;
             }
@@ -158,7 +158,7 @@ pub fn fetch(lic: &config::Rlm, rlmutil: &str) -> Result<(), Box<dyn Error>> {
             let total: i64 = match _total.parse() {
                 Ok(v) => v,
                 Err(e) => {
-                    error!("Can't parse {} as interger: {}", _total, e);
+                    error!("Can't parse {} as integer: {}", _total, e);
                     continue;
                 }
             };
@@ -167,7 +167,7 @@ pub fn fetch(lic: &config::Rlm, rlmutil: &str) -> Result<(), Box<dyn Error>> {
             let reserved: i64 = match _reserved.parse() {
                 Ok(v) => v,
                 Err(e) => {
-                    error!("Can't parse {} as interger: {}", _reserved, e);
+                    error!("Can't parse {} as integer: {}", _reserved, e);
                     continue;
                 }
             };
@@ -176,7 +176,7 @@ pub fn fetch(lic: &config::Rlm, rlmutil: &str) -> Result<(), Box<dyn Error>> {
             let used: i64 = match _used.parse() {
                 Ok(v) => v,
                 Err(e) => {
-                    error!("Can't parse {} as interger: {}", _used, e);
+                    error!("Can't parse {} as integer: {}", _used, e);
                     continue;
                 }
             };
@@ -288,7 +288,7 @@ pub fn fetch(lic: &config::Rlm, rlmutil: &str) -> Result<(), Box<dyn Error>> {
         }
 
         debug!(
-            "rlm.rs:fetch: Setting rlm_feature_used_users -> {} {} {} {} {} {}",
+            "rlm.rs:fetch: Setting rlm_feature_used_users {} {} {} {} {} -> {}",
             lic.name,
             index,
             entry.total.to_string(),
@@ -322,7 +322,7 @@ pub fn fetch(lic: &config::Rlm, rlmutil: &str) -> Result<(), Box<dyn Error>> {
                 license_count += entry.total;
                 feature_count += 1;
             }
-            debug!("rlm.rs:fetch_expiration: Setting rlm_feature_aggregate_expiration_seconds -> {} {} {} {} {}", lic.name, feature_count, index, license_count, exp);
+            debug!("rlm.rs:fetch_expiration: Setting rlm_feature_aggregate_expiration_seconds {} {} {} {} -> {}", lic.name, feature_count, index, license_count, exp);
             RLM_FEATURE_AGGREGATED_EXPIRATION
                 .with_label_values(&[
                     &lic.name,
@@ -349,7 +349,7 @@ fn fetch_checkouts(lic: &config::Rlm, rlmutil: &str) -> Result<(), Box<dyn Error
 
     env::set_var("LANG", "C");
     debug!(
-        "rlm.rs:fetch: Running {} rlmstat -c {} -i {}",
+        "rlm.rs:fetch_checkouts: Running {} rlmstat -c {} -i {}",
         rlmutil, &lic.license, &lic.isv
     );
     let cmd = Command::new(rlmutil)
@@ -367,7 +367,7 @@ fn fetch_checkouts(lic: &config::Rlm, rlmutil: &str) -> Result<(), Box<dyn Error
         }
     };
     debug!(
-        "rlm.rs:fetch: external command finished with exit code {}",
+        "rlm.rs:fetch_checkouts: external command finished with exit code {}",
         rc
     );
 
@@ -426,7 +426,7 @@ fn fetch_checkouts(lic: &config::Rlm, rlmutil: &str) -> Result<(), Box<dyn Error
                     continue;
                 }
                 debug!(
-                    "rlm.rs:fetch_checkouts: Setting rlm_feature_used_users -> {} {} {} {} {}",
+                    "rlm.rs:fetch_checkouts: Setting rlm_feature_used_users {} {} {} {} -> {}",
                     lic.name, feat, user, version, *count
                 );
                 RLM_FEATURES_USER
@@ -451,7 +451,7 @@ fn fetch_status(lic: &config::Rlm, rlmutil: &str) -> Result<(), Box<dyn Error>> 
     for server in lic.license.split(':') {
         env::set_var("LANG", "C");
         debug!(
-            "rlm.rs:fetch_statush: Running {} rlmstat -c {} -l {}",
+            "rlm.rs:fetch_status: Running {} rlmstat -c {} -l {}",
             rlmutil, &lic.license, &lic.isv
         );
         let cmd = Command::new(rlmutil)

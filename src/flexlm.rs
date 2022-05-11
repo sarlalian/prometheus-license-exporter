@@ -149,7 +149,7 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
             let total: i64 = match _total.parse() {
                 Ok(v) => v,
                 Err(e) => {
-                    error!("Can't parse {} as interger: {}", _total, e);
+                    error!("Can't parse {} as integer: {}", _total, e);
                     continue;
                 }
             };
@@ -157,13 +157,13 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
             let used: i64 = match _used.parse() {
                 Ok(v) => v,
                 Err(e) => {
-                    error!("Can't parse {} as interger: {}", _used, e);
+                    error!("Can't parse {} as integer: {}", _used, e);
                     continue;
                 }
             };
 
             debug!(
-                "flexlm.rs:fetch: Setting flexlm_feature_issued -> {} {} {}",
+                "flexlm.rs:fetch: Setting flexlm_feature_issued {} {} -> {}",
                 lic.name, feature, total
             );
             FLEXLM_FEATURES_TOTAL
@@ -171,7 +171,7 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
                 .set(total);
 
             debug!(
-                "flexlm.rs:fetch: Setting flexlm_feature_used -> {} {} {}",
+                "flexlm.rs:fetch: Setting flexlm_feature_used {} {} -> {}",
                 lic.name, feature, used
             );
             FLEXLM_FEATURES_USED
@@ -221,7 +221,7 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
             let count: i64 = match _count.parse() {
                 Ok(v) => v,
                 Err(e) => {
-                    error!("Can't parse {} as interger: {}", _count, e);
+                    error!("Can't parse {} as integer: {}", _count, e);
                     continue;
                 }
             };
@@ -305,7 +305,7 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
             let version = capt.get(3).map_or("", |m| m.as_str());
 
             debug!(
-                "flexlm.rs:fetch: Setting flexlm_vendor_status -> {} {} {} {}",
+                "flexlm.rs:fetch: Setting flexlm_vendor_status {} {} {} -> {}",
                 lic.name, vendor, version, status
             );
             FLEXLM_VENDOR_STATUS
@@ -340,7 +340,7 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
             None => "",
         };
         debug!(
-            "flexlm.rs:fetch: Setting flexlm_server_status -> {} {} {} {} {} {}",
+            "flexlm.rs:fetch: Setting flexlm_server_status {} {} {} {} {} -> {}",
             lic.name, server, master, port, version, status
         );
         FLEXLM_SERVER_STATUS
@@ -358,7 +358,7 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
                             continue;
                         }
                         debug!(
-                            "flexlm.rs:fetch: Setting flexlm_feature_used_users -> {} {} {} {} {}",
+                            "flexlm.rs:fetch: Setting flexlm_feature_used_users {} {} {} {} -> {}",
                             lic.name, feat, user, version, *count
                         );
                         FLEXLM_FEATURES_USER
@@ -392,7 +392,7 @@ fn fetch_expiration(
     //       license servers from  lmstat -c ... -a output instead.
     env::set_var("LANG", "C");
     debug!(
-        "flexlm.rs:fetch: Running {} lmstat -c {} -i",
+        "flexlm.rs:fetch_expiration: Running {} lmstat -c {} -i",
         lmutil, license_server
     );
     let cmd = Command::new(lmutil)
@@ -409,7 +409,7 @@ fn fetch_expiration(
         }
     };
     debug!(
-        "flexlm.rs:fetch: external command finished with exit code {}",
+        "flexlm.rs:fetch_expiration: external command finished with exit code {}",
         rc
     );
 
@@ -444,7 +444,7 @@ fn fetch_expiration(
             let count: i64 = match _count.parse() {
                 Ok(v) => v,
                 Err(e) => {
-                    error!("Can't parse {} as interger: {}", _count, e);
+                    error!("Can't parse {} as integer: {}", _count, e);
                     continue;
                 }
             };
@@ -510,7 +510,7 @@ fn fetch_expiration(
             let count: i64 = match _count.parse() {
                 Ok(v) => v,
                 Err(e) => {
-                    error!("Can't parse {} as interger: {}", _count, e);
+                    error!("Can't parse {} as integer: {}", _count, e);
                     continue;
                 }
             };
@@ -568,7 +568,7 @@ fn fetch_expiration(
         }
 
         debug!(
-            "flexlm.rs:fetch: Setting flexlm_feature_used_users -> {} {} {} {} {} {} {}",
+            "flexlm.rs:fetch: Setting flexlm_feature_used_users {} {} {} {} {} {} -> {}",
             lic.name,
             index,
             entry.license_count.to_string(),
@@ -604,7 +604,7 @@ fn fetch_expiration(
                 license_count += entry.license_count;
                 feature_count += 1;
             }
-            debug!("flexlm.rs:fetch_expiration: Setting flexlm_feature_aggregate_expiration_seconds -> {} {} {} {} {}", lic.name, feature_count, index, license_count, exp);
+            debug!("flexlm.rs:fetch_expiration: Setting flexlm_feature_aggregate_expiration_seconds {} {} {} {} -> {}", lic.name, feature_count, index, license_count, exp);
             FLEXLM_FEATURE_AGGREGATED_EXPIRATION
                 .with_label_values(&[
                     &lic.name,

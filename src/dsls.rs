@@ -381,7 +381,7 @@ fn fetch_expiration(
                 let lcount: i64 = match splitted[11].parse() {
                     Ok(v) => v,
                     Err(e) => {
-                        error!("Can't parse {} as interger: {}", splitted[11], e);
+                        error!("Can't parse {} as integer: {}", splitted[11], e);
                         continue;
                     }
                 };
