@@ -288,8 +288,7 @@ pub fn fetch(lic: &config::Lmx, lmxendutil: &str) -> Result<(), Box<dyn Error>> 
                 *usr.entry(feature.version.to_string()).or_insert(0) += co.used;
             }
 
-            let expiration: f64;
-            expiration = match NaiveDateTime::parse_from_str(
+            let expiration: f64 = match NaiveDateTime::parse_from_str(
                 &format!("{} 00:00:00", feature.expiration_str),
                 "%Y-%m-%d %H:%M:%S",
             ) {

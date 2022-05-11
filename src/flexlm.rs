@@ -450,14 +450,13 @@ fn fetch_expiration(
             };
 
             let _expiration = capt.get(4).map_or("", |m| m.as_str());
-            let expiration: f64;
-            if _expiration == "1-jan-0"
+            let expiration: f64 = if _expiration == "1-jan-0"
                 || _expiration == "01-jan-0000"
                 || _expiration.starts_with("permanent")
             {
-                expiration = f64::INFINITY;
+                f64::INFINITY
             } else {
-                expiration = match NaiveDateTime::parse_from_str(
+                match NaiveDateTime::parse_from_str(
                     &format!("{} 00:00:00", _expiration),
                     "%d-%b-%Y %H:%M:%S",
                 ) {
@@ -466,8 +465,8 @@ fn fetch_expiration(
                         error!("Can't parse {} as date and time: {}", _expiration, e);
                         continue;
                     }
-                };
-            }
+                }
+            };
 
             let vendor = capt.get(5).map_or("", |m| m.as_str());
 
@@ -517,14 +516,13 @@ fn fetch_expiration(
             };
 
             let _expiration = capt.get(5).map_or("", |m| m.as_str());
-            let expiration: f64;
-            if _expiration == "1-jan-0"
+            let expiration: f64 = if _expiration == "1-jan-0"
                 || _expiration == "01-jan-0000"
                 || _expiration.starts_with("permanent")
             {
-                expiration = f64::INFINITY;
+                f64::INFINITY
             } else {
-                expiration = match NaiveDateTime::parse_from_str(
+                match NaiveDateTime::parse_from_str(
                     &format!("{} 00:00:00", _expiration),
                     "%d-%b-%Y %H:%M:%S",
                 ) {
@@ -533,8 +531,8 @@ fn fetch_expiration(
                         error!("Can't parse {} as date and time: {}", _expiration, e);
                         continue;
                     }
-                };
-            }
+                }
+            };
 
             expiration_dates.push(expiration);
             let vendor = capt.get(4).map_or("", |m| m.as_str());

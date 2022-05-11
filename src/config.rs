@@ -5,6 +5,7 @@ use std::fs;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Configuration {
+    pub dsls: Option<Vec<Dsls>>,
     pub global: Option<GlobalConfiguration>,
     pub flexlm: Option<Vec<FlexLM>>,
     pub lmx: Option<Vec<Lmx>>,
@@ -13,9 +14,18 @@ pub struct Configuration {
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct GlobalConfiguration {
+    pub dslicsrv: Option<String>,
     pub lmutil: Option<String>,
     pub lmxendutil: Option<String>,
     pub rlmutil: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct Dsls {
+    pub name: String,
+    pub license: String,
+    pub excluded_features: Option<Vec<String>>,
+    pub export_user: Option<bool>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -103,6 +113,34 @@ fn validate_configuration(cfg: &Configuration) -> Result<(), Box<dyn Error>> {
                 let srvcnt: Vec<&str> = _lmx.license.split(':').collect();
                 if srvcnt.len() != 3 {
                     bail!("Only three servers are allowed for LM-X HAL servers instead of {} for license {}", srvcnt.len(), _lmx.name);
+                }
+            }
+        }
+    }
+
+    if let Some(dsls) = &cfg.dsls {
+        for _dsls in dsls {
+            if _dsls.name.is_empty() {
+                bail!("Empty name for DSLS license");
+            }
+
+            if _dsls.license.is_empty() {
+                bail!(
+                    "Missing license information for DSLS license {}",
+                    _dsls.name
+                );
+            }
+
+            for lsrv in _dsls.license.split(':') {
+                if !lsrv.contains('@') {
+                    bail!("Invalid license for DSLS license {}", _dsls.name);
+                }
+            }
+
+            if _dsls.license.contains(':') {
+                let srvcnt: Vec<&str> = _dsls.license.split(':').collect();
+                if srvcnt.len() != 3 {
+                    bail!("Only three servers are allowed for redundant DSLS servers instead of {} for license {}", srvcnt.len(), _dsls.name);
                 }
             }
         }

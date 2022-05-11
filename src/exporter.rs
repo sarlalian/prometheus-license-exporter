@@ -1,5 +1,6 @@
 use crate::config;
 use crate::constants;
+use crate::dsls;
 use crate::flexlm;
 use crate::lmx;
 use crate::rlm;
@@ -29,6 +30,12 @@ pub fn register(cfg: &config::Configuration) {
     if let Some(lmx) = &cfg.lmx {
         if !lmx.is_empty() {
             lmx::register()
+        }
+    }
+
+    if let Some(dsls) = &cfg.dsls {
+        if !dsls.is_empty() {
+            dsls::register()
         }
     }
 }
@@ -94,6 +101,27 @@ pub fn metrics(cfg: &config::Configuration) -> String {
                     error!(
                         "Can't fetch LM-X license information for {}: {}",
                         _lmx.name, e
+                    );
+                }
+            };
+        }
+    }
+
+    if let Some(dsls) = &cfg.dsls {
+        let mut dslicsrv = constants::DEFAULT_DSLICSRV.to_string();
+        if let Some(glob) = cfg.global.clone() {
+            if let Some(_dslicsrv) = glob.dslicsrv {
+                dslicsrv = _dslicsrv;
+            }
+        }
+
+        for _dsls in dsls {
+            match dsls::fetch(_dsls, &dslicsrv) {
+                Ok(_) => {}
+                Err(e) => {
+                    error!(
+                        "Can't fetch DSLS license information for {}: {}",
+                        _dsls.name, e
                     );
                 }
             };

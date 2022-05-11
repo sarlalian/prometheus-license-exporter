@@ -182,12 +182,10 @@ pub fn fetch(lic: &config::Rlm, rlmutil: &str) -> Result<(), Box<dyn Error>> {
             };
 
             let _expiration = capt.get(4).map_or("", |m| m.as_str());
-            let expiration: f64;
-
-            if _expiration == "permanent" {
-                expiration = f64::INFINITY;
+            let expiration: f64 = if _expiration == "permanent" {
+                f64::INFINITY
             } else {
-                expiration = match NaiveDateTime::parse_from_str(
+                match NaiveDateTime::parse_from_str(
                     &format!("{} 00:00:00", _expiration),
                     "%d-%b-%Y %H:%M:%S",
                 ) {
@@ -196,8 +194,8 @@ pub fn fetch(lic: &config::Rlm, rlmutil: &str) -> Result<(), Box<dyn Error>> {
                         error!("Can't parse {} as date and time: {}", _expiration, e);
                         continue;
                     }
-                };
-            }
+                }
+            };
 
             expiration_dates.push(expiration);
             expiring.push(RlmLicenseData {
