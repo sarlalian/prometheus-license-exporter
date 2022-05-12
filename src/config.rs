@@ -8,6 +8,7 @@ pub struct Configuration {
     pub dsls: Option<Vec<Dsls>>,
     pub global: Option<GlobalConfiguration>,
     pub flexlm: Option<Vec<FlexLM>>,
+    pub licman20: Option<Vec<Licman20>>,
     pub lmx: Option<Vec<Lmx>>,
     pub rlm: Option<Vec<Rlm>>,
 }
@@ -15,6 +16,7 @@ pub struct Configuration {
 #[derive(Clone, Debug, Deserialize)]
 pub struct GlobalConfiguration {
     pub dslicsrv: Option<String>,
+    pub licman20_appl: Option<String>,
     pub lmutil: Option<String>,
     pub lmxendutil: Option<String>,
     pub rlmutil: Option<String>,
@@ -49,6 +51,13 @@ pub struct Rlm {
 pub struct Lmx {
     pub name: String,
     pub license: String,
+    pub excluded_features: Option<Vec<String>>,
+    pub export_user: Option<bool>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct Licman20 {
+    pub name: String,
     pub excluded_features: Option<Vec<String>>,
     pub export_user: Option<bool>,
 }

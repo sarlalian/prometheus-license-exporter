@@ -4,6 +4,7 @@ mod dsls;
 mod exporter;
 mod flexlm;
 mod license;
+mod licman20;
 mod lmx;
 mod logging;
 mod rlm;

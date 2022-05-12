@@ -2,6 +2,7 @@ use crate::config;
 use crate::constants;
 use crate::dsls;
 use crate::flexlm;
+use crate::licman20;
 use crate::lmx;
 use crate::rlm;
 
@@ -38,6 +39,13 @@ pub fn register(cfg: &config::Configuration) {
             dsls::register()
         }
     }
+
+    if let Some(licman20) = &cfg.licman20 {
+        if !licman20.is_empty() {
+            licman20::register()
+        }
+    }
+
 }
 
 pub fn metrics(cfg: &config::Configuration) -> String {
@@ -122,6 +130,27 @@ pub fn metrics(cfg: &config::Configuration) -> String {
                     error!(
                         "Can't fetch DSLS license information for {}: {}",
                         _dsls.name, e
+                    );
+                }
+            };
+        }
+    }
+
+    if let Some(licman20) = &cfg.licman20 {
+        let mut licman20_appl = constants::DEFAULT_LICMAN20_APPL.to_string();
+        if let Some(glob) = cfg.global.clone() {
+            if let Some(_licman20_appl) = glob.licman20_appl {
+                licman20_appl = _licman20_appl;
+            }
+        }
+
+        for _licman20 in licman20 {
+            match licman20::fetch(_licman20, &licman20_appl) {
+                Ok(_) => {}
+                Err(e) => {
+                    error!(
+                        "Can't fetch Licman20 license information for {}: {}",
+                        _licman20.name, e
                     );
                 }
             };
