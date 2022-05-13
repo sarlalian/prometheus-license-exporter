@@ -45,7 +45,6 @@ pub fn register(cfg: &config::Configuration) {
             licman20::register()
         }
     }
-
 }
 
 pub fn metrics(cfg: &config::Configuration) -> String {
