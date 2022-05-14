@@ -265,7 +265,7 @@ pub fn fetch(lic: &config::Dsls, dslicsrv: &str) -> Result<(), Box<dyn Error>> {
                         continue;
                     }
                     debug!(
-                        "dsls.rs:fetch: Setting dsls_feature_used_users -> {} {} {} {}",
+                        "dsls.rs:fetch: Setting dsls_feature_used_users {} {} {} -> {}",
                         lic.name, feat, user, *count
                     );
                     DSLS_FEATURES_USER
