@@ -1,5 +1,5 @@
 pub const NAME: &str = "prometheus-license-exporter";
-pub const VERSION: &str = "1.2.0-20220514";
+pub const VERSION: &str = "1.3.0";
 pub const DEFAULT_PROMETHEUS_ADDRESS: &str = "localhost:9998";
 
 pub const DEFAULT_LMUTIL: &str = "lmutil";
