@@ -35,6 +35,30 @@ flexlm:
     # export_user - Export user names, default is False
     export_user: True
 
+# hasp - HASP based licenses
+hasp:
+    # name - Name of the license, mandatory
+  - name: 'dongle1'
+    # license - license server
+    license: 'port@server'
+    # hasp_key - HASP id of the dongle, mandatory
+    hasp_key: 'haspid'
+    # export_user - Export user names, default is False
+    export_user: true
+    # exclude_features: List if feature IDs to be excluded. Note: Specify *feature ID* instead of feature names because name are not mandatory and can be set using a vendor provided V2C file
+    exclude_features:
+      - 'id1'
+
+# licman20 - Licman 20 licenses
+licman20:
+    # name - Name of the license, mandatory
+  - name: 'appl'
+    # export_user - Export user names, default is False
+    export_user: true
+    # exclude_features: List if product keys to be excluded. Note: Specify *product keys* instead of feature names because name are listed as comments and are not mandatory
+    exclude_features:
+      - 'product_id_1'
+
 # lmx - List of LM-X based licenses
 lmx:
     # name - Name of the license, mandatory
