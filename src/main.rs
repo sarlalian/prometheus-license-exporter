@@ -3,6 +3,8 @@ mod constants;
 mod dsls;
 mod exporter;
 mod flexlm;
+mod hasp;
+mod http;
 mod license;
 mod licman20;
 mod lmx;
