@@ -1,6 +1,6 @@
 # Repositories
-* Primary development repository: https://git.ypbind.de/cgit/prometheus-netapp-exporter/
-* Backup repository: https://github.com/Bobobo-bo-Bo-bobo/prometheus-netapp-exporter
+* Primary development repository: https://git.ypbind.de/cgit/prometheus-license-exporter/
+* Backup repository: https://github.com/Bobobo-bo-Bo-bobo/prometheus-license-exporter
 
 # Preface
 In an enterprise environment, lots of commercial software use network based floating licenses.
