@@ -53,6 +53,13 @@ struct HaspFeature {
     pub logl: Option<String>,
 }
 
+struct HaspSession {
+    pub fid: Option<String>,
+    #[serde(rename = "fn")]
+    pub fname: Option<String>,
+    pub usr: Option<String>,
+}
+
 struct HaspExpiration {
     pub feature: String,
     pub expiration: f64,
@@ -69,11 +76,6 @@ pub fn fetch(lic: &config::Hasp) -> Result<(), Box<dyn Error>> {
     let mut expiring = Vec::<HaspExpiration>::new();
     let mut aggregated_expiration: HashMap<String, Vec<HaspExpiration>> = HashMap::new();
     let mut expiration_dates = Vec::<f64>::new();
-
-    /*
-        // dict -> "feature" -> "user" -> count
-        let mut fuv: HashMap<String, HashMap<String, i64>> = HashMap::new();
-    */
 
     let server: &str;
     let mut port: &str = constants::DEFAULT_HASP_PORT;
@@ -305,6 +307,45 @@ pub fn fetch(lic: &config::Hasp) -> Result<(), Box<dyn Error>> {
             warn!("Key {} not found in HashMap aggregated", exp_str);
         }
     }
+
+    Ok(())
+}
+
+fn fetch_checkouts(lic: &config::Hasp) -> Result<(), Box<dyn Error>> {
+    // dict -> "feature" -> "user" -> count
+    let mut fuv: HashMap<String, HashMap<String, i64>> = HashMap::new();
+    let mut http_client = http::build_client(false, "", constants::DEFAULT_TIMEOUT)?;
+
+    let server: &str;
+    let mut port: &str = constants::DEFAULT_HASP_PORT;
+    if lic.license.contains('@') {
+        let splitted: Vec<&str> = lic.license.split('@').collect();
+        port = splitted[0];
+        server = splitted[1];
+    } else {
+        server = &lic.license;
+    }
+
+    let url = format!(
+        "http://{}:{}/_int_/tab_sessions.html?haspid={}",
+        server, port, lic.hasp_key
+    );
+    let mut user: &str = "";
+    let mut pass: &str = "";
+    if let Some(auth) = &lic.authentication {
+        user = &auth.username;
+        pass = &auth.password;
+    }
+
+    let reply = http::get(&mut http_client, &url, user, pass)?;
+    let sessions: Vec<HaspSession> = match serde_json::from_str(&massage(reply)) {
+        Ok(v) => v,
+        Err(e) => bail!(
+            "Can't decode response for HASP session information from {} as JSON - {}",
+            lic.name,
+            e
+        ),
+    };
 
     Ok(())
 }
