@@ -39,6 +39,10 @@ flexlm:
 hasp:
     # name - Name of the license, mandatory
   - name: 'dongle1'
+    # For password protected access
+    authentication:
+        username: 'user'
+        password: 'pass'
     # license - license server
     license: 'port@server'
     # hasp_key - HASP id of the dongle, mandatory

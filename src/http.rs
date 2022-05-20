@@ -66,16 +66,15 @@ pub fn get(
 ) -> Result<String, Box<dyn Error>> {
     debug!("GET {}", &url);
 
-    let response: reqwest::blocking::Response;
-
-    if user.is_empty() {
-        response = http_client.get(url).send()?;
+    let response = if user.is_empty() {
+        http_client.get(url).send()?
     } else {
-        response = http_client
+        http_client
             .get(url)
             .basic_auth(user, Some(password))
-            .send()?;
-    }
+            .send()?
+    };
+
     if response.status() != reqwest::StatusCode::OK {
         bail!(
             "HTTP connection returned HTTP status code \"{}\" instead of \"200 OK\"",
