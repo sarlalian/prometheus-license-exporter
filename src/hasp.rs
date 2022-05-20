@@ -201,23 +201,10 @@ pub fn fetch(lic: &config::Hasp) -> Result<(), Box<dyn Error>> {
             let expiration: f64;
             if _licexp == "Perpetual" {
                 expiration = f64::INFINITY
-            } else {
-                if let Some(capt) = RE_HASP_EXPIRATION.captures(&_licexp) {
-                    let _expiration = capt.get(1).map_or("", |m| m.as_str());
+            } else if let Some(capt) = RE_HASP_EXPIRATION.captures(&_licexp) {
+                let _expiration = capt.get(1).map_or("", |m| m.as_str());
 
-                    if _expiration.is_empty() {
-                        bail!("BUG - can't parse HASP license expiration from {} of feature id {} for {}", _licexp, fid, lic.name);
-                    }
-
-                    expiration =
-                        match NaiveDateTime::parse_from_str(_expiration, "%a %b %d, %Y %H:%M") {
-                            Ok(v) => v.timestamp() as f64,
-                            Err(e) => {
-                                error!("Can't parse {} as date and time: {}", _expiration, e);
-                                continue;
-                            }
-                        }
-                } else {
+                if _expiration.is_empty() {
                     bail!(
                         "BUG - can't parse HASP license expiration from {} of feature id {} for {}",
                         _licexp,
@@ -225,6 +212,22 @@ pub fn fetch(lic: &config::Hasp) -> Result<(), Box<dyn Error>> {
                         lic.name
                     );
                 }
+
+                expiration = match NaiveDateTime::parse_from_str(_expiration, "%a %b %d, %Y %H:%M")
+                {
+                    Ok(v) => v.timestamp() as f64,
+                    Err(e) => {
+                        error!("Can't parse {} as date and time: {}", _expiration, e);
+                        continue;
+                    }
+                }
+            } else {
+                bail!(
+                    "BUG - can't parse HASP license expiration from {} of feature id {} for {}",
+                    _licexp,
+                    fid,
+                    lic.name
+                );
             }
 
             expiration_dates.push(expiration);
