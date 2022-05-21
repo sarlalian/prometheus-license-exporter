@@ -41,6 +41,11 @@ lazy_static! {
         &["app", "features", "index", "licenses"]
     )
     .unwrap();
+    pub static ref HASP_FEATURES_USER: IntGaugeVec = IntGaugeVec::new(
+        Opts::new("hasp_feature_used_users", "Number of licenses used by user"),
+        &["app", "name", "user"],
+    )
+    .unwrap();
 }
 
 #[derive(Deserialize)]
@@ -53,6 +58,7 @@ struct HaspFeature {
     pub logl: Option<String>,
 }
 
+#[derive(Deserialize)]
 struct HaspSession {
     pub fid: Option<String>,
     #[serde(rename = "fn")]
@@ -308,12 +314,24 @@ pub fn fetch(lic: &config::Hasp) -> Result<(), Box<dyn Error>> {
         }
     }
 
+    if let Some(export_users) = lic.export_user {
+        if export_users {
+            match fetch_checkouts(lic) {
+                Ok(_) => {}
+                Err(e) => {
+                    error!("Unable to get license checkouts: {}", e);
+                }
+            }
+        }
+    }
+
     Ok(())
 }
 
 fn fetch_checkouts(lic: &config::Hasp) -> Result<(), Box<dyn Error>> {
     // dict -> "feature" -> "user" -> count
-    let mut fuv: HashMap<String, HashMap<String, i64>> = HashMap::new();
+    let mut fu: HashMap<String, HashMap<String, i64>> = HashMap::new();
+    let mut fidmap: HashMap<String, String> = HashMap::new();
     let mut http_client = http::build_client(false, "", constants::DEFAULT_TIMEOUT)?;
 
     let server: &str;
@@ -347,6 +365,74 @@ fn fetch_checkouts(lic: &config::Hasp) -> Result<(), Box<dyn Error>> {
         ),
     };
 
+    for sess in sessions {
+        if sess.fid.is_some() {
+            let fid = match sess.fid {
+                Some(v) => v,
+                None => {
+                    // Can't happen
+                    panic!();
+                }
+            };
+
+            if license::is_excluded(&lic.excluded_features, fid.clone()) {
+                debug!(
+                    "hasp.rs:fetch: Skipping feature {} because it is in excluded_features list of {}",
+                    fid, lic.name
+                );
+                continue;
+            }
+
+            let fname: String;
+            if let Some(_fn) = sess.fname {
+                if _fn.is_empty() {
+                    fname = fid.clone();
+                } else {
+                    fname = _fn.clone();
+                }
+            } else {
+                fname = fid.clone();
+            }
+
+            fidmap.entry(fid.clone()).or_insert(fname);
+
+            let user = match sess.usr {
+                Some(v) => v,
+                None => {
+                    error!(
+                        "Checkout of feature id {} of {} has no usr field",
+                        fid, lic.name
+                    );
+                    continue;
+                }
+            };
+
+            let usr = fu.entry(fid).or_insert_with(HashMap::<String, i64>::new);
+            *usr.entry(user).or_insert(0) += 1;
+        }
+    }
+
+    for (feat, uv) in fu.iter() {
+        let fname = match fidmap.get(feat) {
+            Some(v) => v,
+            None => feat,
+        };
+
+        for (user, count) in uv.iter() {
+            if license::is_excluded(&lic.excluded_features, feat.to_string()) {
+                debug!("hasp.rs:fetch_checkouts: Skipping product_key {} because it is in excluded_features list of {}", feat, lic.name);
+                continue;
+            }
+            debug!(
+                "hasp.rs:fetch_checkouts: Setting licman20_feature_used_users {} {} {} -> {}",
+                lic.name, fname, user, *count
+            );
+            HASP_FEATURES_USER
+                .with_label_values(&[&lic.name, fname, user])
+                .set(*count);
+        }
+    }
+
     Ok(())
 }
 
@@ -372,5 +458,8 @@ pub fn register() {
         .unwrap();
     exporter::REGISTRY
         .register(Box::new(HASP_FEATURE_AGGREGATED_EXPIRATION.clone()))
+        .unwrap();
+    exporter::REGISTRY
+        .register(Box::new(HASP_FEATURES_USER.clone()))
         .unwrap();
 }

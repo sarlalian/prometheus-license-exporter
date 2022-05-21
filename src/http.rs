@@ -1,7 +1,6 @@
-use crate::config;
 use crate::constants;
 
-use log::{debug, info};
+use log::debug;
 use simple_error::bail;
 use std::error::Error;
 use std::fs::File;
