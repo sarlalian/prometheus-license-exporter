@@ -1,13 +1,15 @@
 ---
 global:
-	# Default: 'DSLicSrv'
-	dslicsrv: '/path/to/DSLicSrv'
-	# Default: 'lmxendutil'
-	lmxendutil: '/path/to/lmxendutil'
-  # Default: 'lmutil'
-  lmutil: '/path/to/lmutil'
-	# Default: 'rlmutil'
-	rlmutil: '/path/to/rlmutil'
+    # Default: 'DSLicSrv'
+    dslicsrv: '/path/to/DSLicSrv'
+    # Default: 'licman20_appl'
+    licman20_appl: '/path/to/licman20_appl'
+    # Default: 'lmxendutil'
+    lmxendutil: '/path/to/lmxendutil'
+    # Default: 'lmutil'
+    lmutil: '/path/to/lmutil'
+    # Default: 'rlmutil'
+    rlmutil: '/path/to/rlmutil'
 
 # dsls - List of DSLS based licenses
 dsls:
