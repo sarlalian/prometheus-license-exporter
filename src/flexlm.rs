@@ -556,19 +556,19 @@ fn fetch_expiration(
                 vendor: vendor.to_string(),
             });
         } else {
-            debug!("lexlm.rs:fetch_expiration: No regexp matches '{}'", line);
+            debug!("flexlm.rs:fetch_expiration: No regexp matches '{}'", line);
         }
     }
 
     let mut index: i64 = 1;
     for entry in expiring {
         if license::is_excluded(&lic.excluded_features, entry.feature.to_string()) {
-            debug!("flexlm.rs:fetch: Skipping feature {} because it is in excluded_features list of {}", entry.feature, lic.name);
+            debug!("flexlm.rs:fetch_expiration: Skipping feature {} because it is in excluded_features list of {}", entry.feature, lic.name);
             continue;
         }
 
         debug!(
-            "flexlm.rs:fetch: Setting flexlm_feature_used_users {} {} {} {} {} {} -> {}",
+            "flexlm.rs:fetch_expiration: Setting flexlm_feature_used_users {} {} {} {} {} {} -> {}",
             lic.name,
             index,
             entry.license_count.to_string(),

@@ -34,14 +34,16 @@ The configuration file is expected in the YAML format, e.g.:
 ```yaml
 ---
 global:
-	# Default: 'DSLicSrv'
-	dslicsrv: '/path/to/DSLicSrv'
-	# Default: 'lmxendutil'
-	lmxendutil: '/path/to/lmxendutil'
+  # Default: 'DSLicSrv'
+  dslicsrv: '/path/to/DSLicSrv'
+  # Default: 'licman20_appl'
+  licman20_appl: '/path/to/licman20_appl'
+  # Default: 'lmxendutil'
+  lmxendutil: '/path/to/lmxendutil'
   # Default: 'lmutil'
   lmutil: '/path/to/lmutil'
-	# Default: 'rlmutil'
-	rlmutil: '/path/to/rlmutil'
+  # Default: 'rlmutil'
+  rlmutil: '/path/to/rlmutil'
 
 # dsls - List of DSLS based licenses
 dsls:
@@ -68,6 +70,36 @@ flexlm:
       - 'excl_2'
     # export_user - Export user names, default is False
     export_user: True
+
+# hasp - HASP based licenses
+hasp:
+  # name - Name of the license, mandatory
+  - name: 'dongle1'
+    # For password protected access
+    authentication:
+      username: 'user'
+      password: 'pass'
+    # license - license server
+    license: 'port@server'
+    # hasp_key - HASP id of the dongle, mandatory
+    hasp_key: 'haspid'
+    # export_user - Export user names, default is False
+    export_user: true
+    # exclude_features: List if feature IDs to be excluded
+	  # Note: Specify *feature ID* instead of feature names because name are not mandatory and can be set using a vendor provided V2C file
+    exclude_features:
+      - 'id1'
+
+# licman20 - Licman 20 licenses
+licman20:
+    # name - Name of the license, mandatory
+  - name: 'appl'
+    # export_user - Export user names, default is False
+    export_user: true
+    # exclude_features: List if product keys to be excluded
+	  # Note: Specify *product keys* instead of feature names because name are listed as comments and are not mandatory
+    exclude_features:
+      - 'product_id_1'
 
 # lmx - List of LM-X based licenses
 lmx:
@@ -99,19 +131,28 @@ rlm:
     export_user: True
 ```
 
-# Notes
-## FlexLM
+# Supported license types
+## DSLS
+To access DSLS license information a working copy of the client command `DSLicSrv` must be installed.
+
+## FlexLM / FlexNet Publisher
 The metrics exported for FlexLM are mostly compatible with the [flexlm_exporter](https://github.com/mjtrangoni/flexlm_exporter/) written by  Mario Trangoni except for the reporting of reservations and used license features per user but without version information.
 
 To access FlexLM license information a working copy of the client command `lmutil` must be installed.
 
 __*Note:*__ If you get the error `Command not found` while running `lmutil` with the correct `PATH` variable and permissions,  install the missing  `lsb_release` command.
 
-## RLM
-Instead of a server quorum, RLM uses a primaray/failover model for redundancy.
-From the clients point of view, there is no known way to check wich server is the master server and which server is the failover server , hence the status export has no `master` label.
+## HASP
+Because a single HASP license server can manage multiple license dongles, the HASP key ID is mandatory.
 
-To access RLM license information a working copy of the client command `rlmutil` must be installed.
+Mapping of feature IDs to names is optional and can be provided by a V2C file of the license vendor, so only feature IDs should be put into the list of excluded features.
+
+## Licman 2.0
+Licman 2.0 licenses are obtained by querying the *local* license agent `licman20_lld` using the `licman20_appl` tool. 
+
+It's not possible to query license servers directly or obtaining the status of remote license servers.
+
+Futhermore, feature names are optional, specified in the `comment` field of the license, so the list of excluded features must contain the *product key* values.
 
 ## LM-X
 Redundancy in LM-X based licenses is archived by setting up three high availability license server and defining `HAL_SERVERS` in the license file.
@@ -126,8 +167,11 @@ See the [vendor documentation](https://docs.x-formation.com/display/LMX/License+
 
 To access LM-X license information a working copy of the client command `lmxendutil` must be installed.
 
-## DSLS
-To access DSLS license information a working copy of the client command `DSLicSrv` must be installed.
+## RLM
+Instead of a server quorum, RLM uses a primaray/failover model for redundancy.
+From the clients point of view, there is no known way to check wich server is the master server and which server is the failover server , hence the status export has no `master` label.
+
+To access RLM license information a working copy of the client command `rlmutil` must be installed.
 
 # License
 ```

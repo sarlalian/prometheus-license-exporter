@@ -6,8 +6,9 @@ use std::fs;
 #[derive(Clone, Debug, Deserialize)]
 pub struct Configuration {
     pub dsls: Option<Vec<Dsls>>,
-    pub global: Option<GlobalConfiguration>,
     pub flexlm: Option<Vec<FlexLM>>,
+    pub global: Option<GlobalConfiguration>,
+    pub hasp: Option<Vec<Hasp>>,
     pub licman20: Option<Vec<Licman20>>,
     pub lmx: Option<Vec<Lmx>>,
     pub rlm: Option<Vec<Rlm>>,
@@ -24,42 +25,58 @@ pub struct GlobalConfiguration {
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Dsls {
-    pub name: String,
-    pub license: String,
     pub excluded_features: Option<Vec<String>>,
     pub export_user: Option<bool>,
+    pub license: String,
+    pub name: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct FlexLM {
-    pub name: String,
-    pub license: String,
     pub excluded_features: Option<Vec<String>>,
     pub export_user: Option<bool>,
+    pub license: String,
+    pub name: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Rlm {
-    pub name: String,
-    pub license: String,
     pub excluded_features: Option<Vec<String>>,
     pub export_user: Option<bool>,
     pub isv: String,
+    pub license: String,
+    pub name: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Lmx {
-    pub name: String,
-    pub license: String,
     pub excluded_features: Option<Vec<String>>,
     pub export_user: Option<bool>,
+    pub license: String,
+    pub name: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Licman20 {
-    pub name: String,
     pub excluded_features: Option<Vec<String>>,
     pub export_user: Option<bool>,
+    pub name: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct Hasp {
+    pub authentication: Option<HaspAuth>,
+    pub excluded_features: Option<Vec<String>>,
+    pub export_user: Option<bool>,
+    pub hasp_key: String,
+    pub license: String,
+    pub name: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct HaspAuth {
+    pub username: String,
+    pub password: String,
 }
 
 pub fn parse_config_file(f: &str) -> Result<Configuration, Box<dyn Error>> {
@@ -150,6 +167,36 @@ fn validate_configuration(cfg: &Configuration) -> Result<(), Box<dyn Error>> {
                 let srvcnt: Vec<&str> = _dsls.license.split(':').collect();
                 if srvcnt.len() != 3 {
                     bail!("Only three servers are allowed for redundant DSLS servers instead of {} for license {}", srvcnt.len(), _dsls.name);
+                }
+            }
+        }
+    }
+
+    if let Some(hasp) = &cfg.hasp {
+        for _hasp in hasp {
+            if _hasp.name.is_empty() {
+                bail!("Empty name for HASP license");
+            }
+
+            if _hasp.license.is_empty() {
+                bail!(
+                    "Missing license information for HASP license {}",
+                    _hasp.name
+                );
+            }
+
+            if let Some(auth) = &_hasp.authentication {
+                if auth.username.is_empty() {
+                    bail!(
+                        "HASP authentication requires a username for HASP license {}",
+                        _hasp.name
+                    );
+                }
+                if auth.password.is_empty() {
+                    bail!(
+                        "HASP authentication require a password for HASP license {}",
+                        _hasp.name
+                    );
                 }
             }
         }

@@ -2,6 +2,7 @@ use crate::config;
 use crate::constants;
 use crate::dsls;
 use crate::flexlm;
+use crate::hasp;
 use crate::licman20;
 use crate::lmx;
 use crate::rlm;
@@ -43,6 +44,12 @@ pub fn register(cfg: &config::Configuration) {
     if let Some(licman20) = &cfg.licman20 {
         if !licman20.is_empty() {
             licman20::register()
+        }
+    }
+
+    if let Some(hasp) = &cfg.hasp {
+        if !hasp.is_empty() {
+            hasp::register();
         }
     }
 }
@@ -150,6 +157,20 @@ pub fn metrics(cfg: &config::Configuration) -> String {
                     error!(
                         "Can't fetch Licman20 license information for {}: {}",
                         _licman20.name, e
+                    );
+                }
+            };
+        }
+    }
+
+    if let Some(hasp) = &cfg.hasp {
+        for _hasp in hasp {
+            match hasp::fetch(_hasp) {
+                Ok(_) => {}
+                Err(e) => {
+                    error!(
+                        "Can't fetch HASP license information for {}: {}",
+                        _hasp.name, e
                     );
                 }
             };
