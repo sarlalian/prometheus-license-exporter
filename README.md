@@ -147,6 +147,8 @@ Because a single HASP license server can manage multiple license dongles, the HA
 
 Mapping of feature IDs to names is optional and can be provided by a V2C file of the license vendor, so only feature IDs should be put into the list of excluded features.
 
+**Note:** Please use the server to which the hardware dongles are connected to, *not* the local HASP service on the client.
+
 ## Licman 2.0
 Licman 2.0 licenses are obtained by querying the *local* license agent `licman20_lld` using the `licman20_appl` tool. 
 
