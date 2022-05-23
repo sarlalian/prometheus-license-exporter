@@ -86,7 +86,7 @@ hasp:
     # export_user - Export user names, default is False
     export_user: true
     # exclude_features: List if feature IDs to be excluded
-	  # Note: Specify *feature ID* instead of feature names because name are not mandatory and can be set using a vendor provided V2C file
+    # Note: Specify *feature ID* instead of feature names because name are not mandatory and can be set using a vendor provided V2C file
     exclude_features:
       - 'id1'
 
@@ -97,7 +97,7 @@ licman20:
     # export_user - Export user names, default is False
     export_user: true
     # exclude_features: List if product keys to be excluded
-	  # Note: Specify *product keys* instead of feature names because name are listed as comments and are not mandatory
+    # Note: Specify *product keys* instead of feature names because name are listed as comments and are not mandatory
     exclude_features:
       - 'product_id_1'
 
