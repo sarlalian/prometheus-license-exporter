@@ -5,9 +5,6 @@
 # Preface
 In an enterprise environment, lots of commercial software use network based floating licenses.
 
-# Supported license types
-## FlexLM
-
 # Requirements
 ## Build requirements
 As a Rust programm, a current stable Rust build environment is required.
