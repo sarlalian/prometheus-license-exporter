@@ -46,6 +46,11 @@ lazy_static! {
         &["app", "name", "user"],
     )
     .unwrap();
+    pub static ref HASP_SERVER_STATUS: IntGaugeVec = IntGaugeVec::new(
+        Opts::new("hasp_server_status", "Status of license server"),
+        &["app", "fqdn", "master", "port", "hasp_key"],
+    )
+    .unwrap();
 }
 
 #[derive(Deserialize)]
@@ -104,15 +109,45 @@ pub fn fetch(lic: &config::Hasp) -> Result<(), Box<dyn Error>> {
         pass = &auth.password;
     }
 
-    let reply = http::get(&mut http_client, &url, user, pass)?;
+    let reply = match http::get(&mut http_client, &url, user, pass) {
+        Ok(v) => v,
+        Err(e) => {
+            debug!(
+                "Setting hasp_server_status {} {} {} {} -> 0",
+                lic.name, server, port, lic.hasp_key
+            );
+            HASP_SERVER_STATUS
+                .with_label_values(&[&lic.name, server, port, &lic.hasp_key])
+                .set(0);
+            return Err(e);
+        }
+    };
     let features: Vec<HaspFeature> = match serde_json::from_str(&massage(reply)) {
         Ok(v) => v,
-        Err(e) => bail!(
-            "Can't decode response for HASP feature information from {} as JSON - {}",
-            lic.name,
-            e
-        ),
+        Err(e) => {
+            debug!(
+                "Setting hasp_server_status {} {} {} {} -> 0",
+                lic.name, server, port, lic.hasp_key
+            );
+            HASP_SERVER_STATUS
+                .with_label_values(&[&lic.name, server, port, &lic.hasp_key])
+                .set(0);
+
+            bail!(
+                "Can't decode response for HASP feature information from {} as JSON - {}",
+                lic.name,
+                e
+            )
+        }
     };
+
+    debug!(
+        "Setting hasp_server_status {} {} {} {} -> 1",
+        lic.name, server, port, lic.hasp_key
+    );
+    HASP_SERVER_STATUS
+        .with_label_values(&[&lic.name, server, port, &lic.hasp_key])
+        .set(1);
 
     for feat in features {
         if feat.fid.is_some() {
@@ -355,16 +390,40 @@ fn fetch_checkouts(lic: &config::Hasp) -> Result<(), Box<dyn Error>> {
         pass = &auth.password;
     }
 
-    let reply = http::get(&mut http_client, &url, user, pass)?;
+    let reply = match http::get(&mut http_client, &url, user, pass) {
+        Ok(v) => v,
+        Err(e) => {
+            debug!(
+                "Setting hasp_server_status {} {} {} {} -> 0",
+                lic.name, server, port, lic.hasp_key
+            );
+            HASP_SERVER_STATUS
+                .with_label_values(&[&lic.name, server, port, &lic.hasp_key])
+                .set(0);
+
+            return Err(e);
+        }
+    };
     let sessions: Vec<HaspSession> = match serde_json::from_str(&massage(reply)) {
         Ok(v) => v,
-        Err(e) => bail!(
-            "Can't decode response for HASP session information from {} as JSON - {}",
-            lic.name,
-            e
-        ),
+        Err(e) => {
+            debug!(
+                "Setting hasp_server_status {} {} {} {} -> 0",
+                lic.name, server, port, lic.hasp_key
+            );
+            HASP_SERVER_STATUS
+                .with_label_values(&[&lic.name, server, port, &lic.hasp_key])
+                .set(0);
+
+            bail!(
+                "Can't decode response for HASP session information from {} as JSON - {}",
+                lic.name,
+                e
+            )
+        }
     };
 
+    // Note: At this point HASP_SERVER_STATUS was already set to 1
     for sess in sessions {
         if sess.fid.is_some() {
             let fid = match sess.fid {
@@ -441,7 +500,8 @@ fn massage(b0rken: String) -> String {
         static ref RE_C_STYLE_COMMENT: Regex = Regex::new(r"/\*.*?\*/").unwrap();
     }
     // HASP data is in JSON format but it includes C-style  comments (/* ... */) and it lacks
-    // the JSON notation for an array
+    // the JSON notation for an array. Remove line breaks to make it trivial to construct a regexp
+    // for its removal.
     let massaged = b0rken.replace('\r', "").replace('\n', "");
     format!("[ {} ]", RE_C_STYLE_COMMENT.replace_all(&massaged, ""))
 }
@@ -461,5 +521,8 @@ pub fn register() {
         .unwrap();
     exporter::REGISTRY
         .register(Box::new(HASP_FEATURES_USER.clone()))
+        .unwrap();
+    exporter::REGISTRY
+        .register(Box::new(HASP_SERVER_STATUS.clone()))
         .unwrap();
 }
