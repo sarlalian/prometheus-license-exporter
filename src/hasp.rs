@@ -48,7 +48,7 @@ lazy_static! {
     .unwrap();
     pub static ref HASP_SERVER_STATUS: IntGaugeVec = IntGaugeVec::new(
         Opts::new("hasp_server_status", "Status of license server"),
-        &["app", "fqdn", "master", "port", "hasp_key"],
+        &["app", "fqdn", "port", "hasp_key"],
     )
     .unwrap();
 }
