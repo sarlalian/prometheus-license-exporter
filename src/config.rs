@@ -10,6 +10,7 @@ pub struct Configuration {
     pub global: Option<GlobalConfiguration>,
     pub hasp: Option<Vec<Hasp>>,
     pub licman20: Option<Vec<Licman20>>,
+    pub olicense: Option<Vec<Olicense>>,
     pub lmx: Option<Vec<Lmx>>,
     pub rlm: Option<Vec<Rlm>>,
 }
@@ -77,6 +78,14 @@ pub struct Hasp {
 pub struct HaspAuth {
     pub username: String,
     pub password: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct Olicense {
+    pub excluded_features: Option<Vec<String>>,
+    pub export_user: Option<bool>,
+    pub license: String,
+    pub name: String,
 }
 
 pub fn parse_config_file(f: &str) -> Result<Configuration, Box<dyn Error>> {
@@ -196,6 +205,21 @@ fn validate_configuration(cfg: &Configuration) -> Result<(), Box<dyn Error>> {
                     bail!(
                         "HASP authentication require a password for HASP license {}",
                         _hasp.name
+                    );
+                }
+            }
+        }
+
+        if let Some(olicense) = &cfg.olicense {
+            for _olic in olicense {
+                if _olic.name.is_empty() {
+                    bail!("Empty name for OLicense license");
+                }
+
+                if _olic.license.is_empty() {
+                    bail!(
+                        "Missing license information for OLicense license {}",
+                        _olic.name
                     );
                 }
             }

@@ -5,6 +5,7 @@ use crate::flexlm;
 use crate::hasp;
 use crate::licman20;
 use crate::lmx;
+use crate::olicense;
 use crate::rlm;
 
 use lazy_static::lazy_static;
@@ -50,6 +51,12 @@ pub fn register(cfg: &config::Configuration) {
     if let Some(hasp) = &cfg.hasp {
         if !hasp.is_empty() {
             hasp::register();
+        }
+    }
+
+    if let Some(olicense) = &cfg.olicense {
+        if !olicense.is_empty() {
+            olicense::register()
         }
     }
 }
@@ -171,6 +178,20 @@ pub fn metrics(cfg: &config::Configuration) -> String {
                     error!(
                         "Can't fetch HASP license information for {}: {}",
                         _hasp.name, e
+                    );
+                }
+            };
+        }
+    }
+
+    if let Some(olicense) = &cfg.olicense {
+        for _olic in olicense {
+            match olicense::fetch(_olic) {
+                Ok(_) => {}
+                Err(e) => {
+                    error!(
+                        "Can't fetch OLicense license information for {}: {}",
+                        _olic.name, e
                     );
                 }
             };

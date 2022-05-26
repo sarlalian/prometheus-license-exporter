@@ -9,6 +9,7 @@ mod license;
 mod licman20;
 mod lmx;
 mod logging;
+mod olicense;
 mod rlm;
 mod usage;
 
