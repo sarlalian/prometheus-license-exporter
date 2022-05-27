@@ -120,7 +120,7 @@ pub fn fetch(lic: &config::Olicense) -> Result<(), Box<dyn Error>> {
         };
     }
 
-    let mut server_is_ok: bool;
+    let mut server_is_ok = false;
     let mut features_exported = false;
 
     for (server, port) in server_port {
@@ -140,6 +140,7 @@ pub fn fetch(lic: &config::Olicense) -> Result<(), Box<dyn Error>> {
                 OLICENSE_SERVER_STATUS
                     .with_label_values(&[&lic.name, &server, &port, ""])
                     .set(0);
+                server_is_ok = false;
                 continue;
             }
         };
@@ -158,9 +159,14 @@ pub fn fetch(lic: &config::Olicense) -> Result<(), Box<dyn Error>> {
                 OLICENSE_SERVER_STATUS
                     .with_label_values(&[&lic.name, &server, &port, ""])
                     .set(0);
+                server_is_ok = false;
                 continue;
             }
         };
+
+        if server_is_ok {
+            continue;
+        }
 
         println!("{:?}", parsed);
 
@@ -189,6 +195,8 @@ pub fn fetch(lic: &config::Olicense) -> Result<(), Box<dyn Error>> {
         OLICENSE_SERVER_STATUS
             .with_label_values(&[&lic.name, &server, &port, &parsed.server_version])
             .set(1);
+
+        server_is_ok = true;
     }
     Ok(())
 }

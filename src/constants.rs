@@ -1,6 +1,6 @@
 pub const NAME: &str = "prometheus-license-exporter";
 pub const SOURCE: &str = "https://git.ypbind.de/cgit/prometheus-license-exporter";
-pub const VERSION: &str = "1.4.2-20220526";
+pub const VERSION: &str = "1.4.2-20220527";
 
 pub const DEFAULT_TIMEOUT: u64 = 60;
 pub const DEFAULT_PROMETHEUS_ADDRESS: &str = "localhost:9998";
