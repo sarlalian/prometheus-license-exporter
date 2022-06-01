@@ -102,7 +102,20 @@ licman20:
 lmx:
     # name - Name of the license, mandatory
   - name: 'lmx_license'
-     # license - Query RLM license at port@server, see note below about LM-X and high available licenses
+     # license - Query LM-X license at port@server, see note below about LM-X and high available licenses
+    license: 'port@server1:port@server2:port@server3'
+    # excluded_features - List of features to be excluded
+    excluded_features:
+      - 'e1'
+      - 'e2'
+    # export_user - Export user names, default is False
+    export_user: True
+
+# OLicense - List of OLicense based licenses
+olicense:
+    # name - Name of the license, mandatory
+  - name: 'olic_license'
+     # license - Query OLicense license at port@server
     license: 'port@server1:port@server2:port@server3'
     # excluded_features - List of features to be excluded
     excluded_features:
@@ -165,6 +178,11 @@ The order of the license servers is important, because the it also defines the c
 See the [vendor documentation](https://docs.x-formation.com/display/LMX/License+server+configuration+file) for futher details about high availability mode.
 
 To access LM-X license information a working copy of the client command `lmxendutil` must be installed.
+
+## OLicense
+At the moment, only OLicense version 3 format is supported. If OLicense version 4 support is required, sample data will be needed.
+
+Although a redundant license triple are supported, they tend to be unstable and often fail to the dreaded `In synchronisation mode` state.
 
 ## RLM
 Instead of a server quorum, RLM uses a primaray/failover model for redundancy.
