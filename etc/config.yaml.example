@@ -78,6 +78,19 @@ lmx:
     # export_user - Export user names, default is False
     export_user: True
 
+# OLicense - List of OLicense based licenses
+olicense:
+    # name - Name of the license, mandatory
+  - name: 'olic_license'
+     # license - Query OLicense license at port@server
+    license: 'port@server1:port@server2:port@server3'
+    # excluded_features - List of features to be excluded
+    excluded_features:
+      - 'e1'
+      - 'e2'
+    # export_user - Export user names, default is False
+    export_user: True
+
 # rlm - List of RLM based licenses
 rlm:
     # name - Name of the license, mandatory
