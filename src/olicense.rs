@@ -228,6 +228,11 @@ pub fn fetch(lic: &config::Olicense) -> Result<(), Box<dyn Error>> {
         let mut expiration_dates = Vec::<f64>::new();
 
         for f in parsed.features {
+            if license::is_excluded(&lic.excluded_features, f.name.clone()) {
+                debug!("olicense.rs:fetch: Skipping feature {} because it is in excluded_features list of {}", f.name, lic.name);
+                continue;
+            }
+
             debug!(
                 "Setting olicense_feature_issued {} {} {} {} -> {}",
                 lic.name, f.vendor, f.name, f.module, f.total
