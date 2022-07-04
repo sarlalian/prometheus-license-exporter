@@ -1,34 +1,46 @@
-# Repositories
+= prometheus-license-exporter
+:stylesheet: asciidoc.css
+
+== Repositories
+
 * Primary development repository: https://git.ypbind.de/cgit/prometheus-license-exporter/
 * Backup repository: https://github.com/Bobobo-bo-Bo-bobo/prometheus-license-exporter
 
-# Preface
+== Preface
+
 In an enterprise environment, lots of commercial software use network based floating licenses.
 
-# Requirements
-## Build requirements
-As a Rust programm, a current stable Rust build environment is required.
-Aditionally the development file of `libssl` are required to build the `reqwest` crate.
+== Requirements
 
-## Runtime requirements
+=== Build requirements
+
+As a Rust programm, a current stable Rust build environment is required. Aditionally the development file of `libssl` are required to build the `reqwest` crate.
+
+=== Runtime requirements
+
 `libssl` is required to run this programm.
 
-# Usage
-## Command line parameters
+== Usage
 
-| *Option* | *Parameter* | *Note* |
-|:---------|:------------|:-------|
-| `-D` / `--debug` | - | Show debug messages |
-| `-V` / `--version` | - | Show version information |
-| `-c <cfg>` / `--config=<cfg>` | Read configuration from `<cfg>` | **mandatory** |
-| `-h` / `--help` | - | Show help text |
-| `-l <addr>` / `--listen=<addr>` | Listen on `<addr>` for metric requests | Default: `localhost:9988` |
-| `-q` / `--quiet` | - | Quiet operation. Only warnings and errors are shown |
+=== Command line parameters
 
-## Configuration file
+[width="100%",cols="<34%,<41%,<25%",options="header",]
+|===
+|_Option_ |_Parameter_ |_Note_
+|`-D` / `--debug` |- |Show debug messages
+|`-V` / `--version` |- |Show version information
+|`-c <cfg>` / `--config=<cfg>` |Read configuration from `<cfg>` |*mandatory*
+|`-h` / `--help` |- |Show help text
+|`-l <addr>` / `--listen=<addr>` |Listen on `<addr>` for metric requests |Default: `localhost:9988`
+|`-q` / `--quiet` |- |Quiet operation. Only warnings and errors are shown
+|===
+
+=== Configuration file
+
 The configuration file is expected in the YAML format, e.g.:
 
-```yaml
+[source,yaml]
+----
 ---
 global:
   # Default: 'DSLicSrv'
@@ -139,59 +151,67 @@ rlm:
       - 'e2'
     # export_user - Export user names, default is False
     export_user: True
-```
+----
 
-# Supported license types
-## DSLS
+== Supported license types
+
+=== DSLS
+
 To access DSLS license information a working copy of the client command `DSLicSrv` must be installed.
 
-## FlexLM / FlexNet Publisher
-The metrics exported for FlexLM are mostly compatible with the [flexlm_exporter](https://github.com/mjtrangoni/flexlm_exporter/) written by  Mario Trangoni except for the reporting of reservations and used license features per user but without version information.
+=== FlexLM / FlexNet Publisher
+
+The metrics exported for FlexLM are mostly compatible with the https://github.com/mjtrangoni/flexlm_exporter/[flexlm_exporter] written by Mario Trangoni except for the reporting of reservations and used license features per user but without version information.
 
 To access FlexLM license information a working copy of the client command `lmutil` must be installed.
 
-__*Note:*__ If you get the error `Command not found` while running `lmutil` with the correct `PATH` variable and permissions,  install the missing  `lsb_release` command.
+*_Note:_* If you get the error `Command not found` while running `lmutil` with the correct `PATH` variable and permissions, install the missing `lsb_release` command.
 
-## HASP
+=== HASP
+
 Because a single HASP license server can manage multiple license dongles, the HASP key ID is mandatory.
 
 Mapping of feature IDs to names is optional and can be provided by a V2C file of the license vendor, so only feature IDs should be put into the list of excluded features.
 
-**Note:** Please use the server to which the hardware dongles are connected to, *not* the local HASP service on the client.
+*Note:* Please use the server to which the hardware dongles are connected to, _not_ the local HASP service on the client.
 
-## Licman 2.0
-Licman 2.0 licenses are obtained by querying the *local* license agent `licman20_lld` using the `licman20_appl` tool. 
+=== Licman 2.0
 
-It's not possible to query license servers directly or obtaining the status of remote license servers.
+Licman 2.0 licenses are obtained by querying the _local_ license agent `licman20_lld` using the `licman20_appl` tool.
 
-Futhermore, feature names are optional, specified in the `comment` field of the license, so the list of excluded features must contain the *product key* values.
+It’s not possible to query license servers directly or obtaining the status of remote license servers.
 
-## LM-X
+Futhermore, feature names are optional, specified in the `comment` field of the license, so the list of excluded features must contain the _product key_ values.
+
+=== LM-X
+
 Redundancy in LM-X based licenses is archived by setting up three high availability license server and defining `HAL_SERVERS` in the license file.
 
 The order of the license servers is important, because the it also defines the capabilities of the servers.
 
 * the first license server is always the master server and allows license checkouts and license borrowing
-* the second license server is always the first slave server and allows license checkouts but does *not* allow license borrowing
-* the third license server is always the seconds slave server and does *neither* allow license checkouts *nor* license borrowing
+* the second license server is always the first slave server and allows license checkouts but does _not_ allow license borrowing
+* the third license server is always the seconds slave server and does _neither_ allow license checkouts _nor_ license borrowing
 
-See the [vendor documentation](https://docs.x-formation.com/display/LMX/License+server+configuration+file) for futher details about high availability mode.
+See the https://docs.x-formation.com/display/LMX/License+server+configuration+file[vendor documentation] for futher details about high availability mode.
 
 To access LM-X license information a working copy of the client command `lmxendutil` must be installed.
 
-## OLicense
+=== OLicense
+
 At the moment, only OLicense version 3 format is supported. If OLicense version 4 support is required, sample data will be needed.
 
 Although a redundant license triple are supported, they tend to be unstable and often fail to the dreaded `In synchronisation mode` state.
 
-## RLM
-Instead of a server quorum, RLM uses a primaray/failover model for redundancy.
-From the clients point of view, there is no known way to check wich server is the master server and which server is the failover server , hence the status export has no `master` label.
+=== RLM
+
+Instead of a server quorum, RLM uses a primaray/failover model for redundancy. From the clients point of view, there is no known way to check wich server is the master server and which server is the failover server , hence the status export has no `master` label.
 
 To access RLM license information a working copy of the client command `rlmutil` must be installed.
 
-# License
-```
+== License
+
+....
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 
@@ -866,4 +886,4 @@ may consider it more useful to permit linking proprietary applications with
 the library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.  But first, please read
 <http://www.gnu.org/philosophy/why-not-lgpl.html>.
-```
+....
