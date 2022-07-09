@@ -1,5 +1,7 @@
-= prometheus-license-exporter
+= prometheus-license-exporter - Export license usage for various license types (DSLS, FlexLM, LM-X, Licman 2.0, RLM, HASP, OLicense) to Prometheus
+:source-highlighter: pygments
 :stylesheet: asciidoc.css
+:toc: left
 
 == Repositories
 
@@ -14,11 +16,11 @@ In an enterprise environment, lots of commercial software use network based floa
 
 === Build requirements
 
-As a Rust programm, a current stable Rust build environment is required. Aditionally the development file of `libssl` are required to build the `reqwest` crate.
+As a Rust program, a current stable Rust build environment is required. Additionally the development file of `libssl` are required to build the `reqwest` crate.
 
 === Runtime requirements
 
-`libssl` is required to run this programm.
+`libssl` is required to run this program.
 
 == Usage
 
