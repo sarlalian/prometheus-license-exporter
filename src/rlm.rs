@@ -64,7 +64,7 @@ pub struct RlmLicenseData {
 pub fn fetch(lic: &config::Rlm, rlmutil: &str) -> Result<(), Box<dyn Error>> {
     lazy_static! {
         static ref RE_RLM_FEATURE_VERSION: Regex =
-            Regex::new(r"^\s+([\w\-.]+)\s([\w.]+)$").unwrap();
+            Regex::new(r"^\s+([\w\-.]+)\s([\w.]+).*$").unwrap();
         static ref RE_RLM_USAGE: Regex = Regex::new(
             r"^\s+count:\s+(\d+),\s+# reservations:\s+(\d+),\s+inuse:\s+(\d+), exp:\s+([\w\-]+)"
         )
