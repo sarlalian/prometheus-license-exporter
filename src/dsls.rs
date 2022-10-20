@@ -135,7 +135,7 @@ pub fn fetch(lic: &config::Dsls, dslicsrv: &str) -> Result<(), Box<dyn Error>> {
             if let Some(capt) = RE_DSLS_VERSION.captures(line) {
                 if capt.len() != 2 {
                     error!(
-                        "Regular expression returns {} capture groups instead of 2",
+                        "dsls.rs:fetch: Regular expression returns {} capture groups instead of 2 for RE_DSLS_VERSION",
                         capt.len()
                     );
                     continue;
@@ -147,7 +147,7 @@ pub fn fetch(lic: &config::Dsls, dslicsrv: &str) -> Result<(), Box<dyn Error>> {
             } else if let Some(capt) = RE_DSLS_STATUS.captures(line) {
                 if capt.len() != 2 {
                     error!(
-                        "Regular expression returns {} capture groups instead of 2",
+                        "dsls.rs:fetch: Regular expression returns {} capture groups instead of 2 for RE_DSLS_STATUS",
                         capt.len()
                     );
                     continue;
@@ -197,7 +197,7 @@ pub fn fetch(lic: &config::Dsls, dslicsrv: &str) -> Result<(), Box<dyn Error>> {
                         break;
                     }
                     Err(e) => {
-                        error!("Unable to fetch expiration dates: {}", e);
+                        error!("dsls.rs:fetch: Unable to fetch expiration dates: {}", e);
                     }
                 };
             }
@@ -381,7 +381,10 @@ fn fetch_expiration(
                 let lcount: i64 = match splitted[11].parse() {
                     Ok(v) => v,
                     Err(e) => {
-                        error!("Can't parse {} as integer: {}", splitted[11], e);
+                        error!(
+                            "dsls.rs:fetch_expiration: Can't parse {} as integer: {}",
+                            splitted[11], e
+                        );
                         continue;
                     }
                 };

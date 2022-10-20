@@ -129,7 +129,7 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
         if let Some(capt) = RE_LMSTAT_USAGE.captures(line) {
             if capt.len() != 4 {
                 error!(
-                    "Regular expression returns {} capture groups instead of 4",
+                    "flexlm.rs:fetch: Regular expression returns {} capture groups instead of 4 for RE_LMSTAT_USAGE",
                     capt.len()
                 );
                 continue;
@@ -149,7 +149,7 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
             let total: i64 = match _total.parse() {
                 Ok(v) => v,
                 Err(e) => {
-                    error!("Can't parse {} as integer: {}", _total, e);
+                    error!("flexlm.rs:fetch: Can't parse {} as integer: {}", _total, e);
                     continue;
                 }
             };
@@ -157,7 +157,7 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
             let used: i64 = match _used.parse() {
                 Ok(v) => v,
                 Err(e) => {
-                    error!("Can't parse {} as integer: {}", _used, e);
+                    error!("flexlm.rs:fetch: Can't parse {} as integer: {}", _used, e);
                     continue;
                 }
             };
@@ -180,7 +180,7 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
         } else if let Some(capt) = RE_LMSTAT_USERS_SINGLE_LICENSE.captures(line) {
             if capt.len() != 3 {
                 error!(
-                    "Regular expression returns {} capture groups instead of 3",
+                    "flexlm.rs:fetch: Regular expression returns {} capture groups instead of 3 RE_LMSTAT_USERS_SINGLE_LICENSE",
                     capt.len(),
                 );
                 continue;
@@ -204,7 +204,7 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
         } else if let Some(capt) = RE_LMSTAT_USERS_MULTI_LICENSE.captures(line) {
             if capt.len() != 4 {
                 error!(
-                    "Regular expression returns {} capture groups instead of 3",
+                    "flexlm.rs:fetch: Regular expression returns {} capture groups instead of 3 RE_LMSTAT_USERS_MULTI_LICENSE",
                     capt.len(),
                 );
                 continue;
@@ -221,7 +221,7 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
             let count: i64 = match _count.parse() {
                 Ok(v) => v,
                 Err(e) => {
-                    error!("Can't parse {} as integer: {}", _count, e);
+                    error!("flexlm.rs:fetch: Can't parse {} as integer: {}", _count, e);
                     continue;
                 }
             };
@@ -236,7 +236,7 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
         } else if let Some(capt) = RE_LMSTAT_LICENSE_SERVER_STATUS.captures(line) {
             if capt.len() != 2 {
                 error!(
-                    "Regular expression returns {} capture groups instead of 2",
+                    "flexlm.rs:fetch: Regular expression returns {} capture groups instead of 2 for RE_LMSTAT_LICENSE_SERVER_STATUS",
                     capt.len()
                 );
                 continue;
@@ -260,7 +260,7 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
         } else if let Some(capt) = RE_LMSTAT_SERVER_STATUS.captures(line) {
             if capt.len() != 5 {
                 error!(
-                    "Regular expression returns {} capture groups instead of 5",
+                    "flexlm.rs:fetch: Regular expression returns {} capture groups instead of 5 for RE_LMSTAT_SERVER_STATUS",
                     capt.len()
                 );
                 continue;
@@ -285,7 +285,7 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
         } else if let Some(capt) = RE_LMSTAT_VENDOR_STATUS.captures(line) {
             if capt.len() != 4 {
                 error!(
-                    "Regular expression returns {} capture groups instead of 4",
+                    "flexlm.rs:fetch: Regular expression returns {} capture groups instead of 4 for RE_LMSTAT_VENDOR_STATUS",
                     capt.len()
                 );
                 continue;
@@ -320,7 +320,7 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
         match fetch_expiration(lic, lmutil, license_server) {
             Ok(_) => {}
             Err(e) => {
-                error!("Unable to fetch expiration dates: {}", e);
+                error!("flexlm.rs:fetch: Unable to fetch expiration dates: {}", e);
             }
         };
     } else {
@@ -427,7 +427,7 @@ fn fetch_expiration(
         if let Some(capt) = RE_LMSTAT_EXPIRATION.captures(line) {
             if capt.len() != 6 {
                 error!(
-                    "Regular expression returns {} capture groups instead of 6",
+                    "flexlm.rs:fetch_expiration: Regular expression returns {} capture groups instead of 6 for RE_LMSTAT_EXPIRATION",
                     capt.len()
                 );
                 continue;
@@ -462,7 +462,10 @@ fn fetch_expiration(
                 ) {
                     Ok(v) => v.timestamp() as f64,
                     Err(e) => {
-                        error!("Can't parse {} as date and time: {}", _expiration, e);
+                        error!(
+                            "flexlm.rs:fetch_expiration: Can't parse {} as date and time: {}",
+                            _expiration, e
+                        );
                         continue;
                     }
                 }
@@ -493,7 +496,7 @@ fn fetch_expiration(
         } else if let Some(capt) = RE_LMSTAT_ALTERNATIVE_EXPIRATION.captures(line) {
             if capt.len() != 6 {
                 error!(
-                    "Regular expression returns {} capture groups instead of 6",
+                    "flexlm.rs:fetch_expiration: Regular expression returns {} capture groups instead of 6 for RE_LMSTAT_ALTERNATIVE_EXPIRATION",
                     capt.len()
                 );
                 continue;
@@ -510,7 +513,10 @@ fn fetch_expiration(
             let count: i64 = match _count.parse() {
                 Ok(v) => v,
                 Err(e) => {
-                    error!("Can't parse {} as integer: {}", _count, e);
+                    error!(
+                        "flexlm.rs:fetch_expiration: Can't parse {} as integer: {}",
+                        _count, e
+                    );
                     continue;
                 }
             };
@@ -528,7 +534,10 @@ fn fetch_expiration(
                 ) {
                     Ok(v) => v.timestamp() as f64,
                     Err(e) => {
-                        error!("Can't parse {} as date and time: {}", _expiration, e);
+                        error!(
+                            "flexlm.rs:fetch_expiration: Can't parse {} as date and time: {}",
+                            _expiration, e
+                        );
                         continue;
                     }
                 }

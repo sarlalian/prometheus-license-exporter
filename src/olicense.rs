@@ -170,7 +170,7 @@ pub fn fetch(lic: &config::Olicense) -> Result<(), Box<dyn Error>> {
             Ok(v) => v,
             Err(e) => {
                 error!(
-                    "Can't fetch license information from OLicense server {}:{}: {}",
+                    "olicense.rs:fetch: Can't fetch license information from OLicense server {}:{}: {}",
                     server, port, e
                 );
                 debug!(
@@ -188,7 +188,7 @@ pub fn fetch(lic: &config::Olicense) -> Result<(), Box<dyn Error>> {
             Ok(v) => v,
             Err(e) => {
                 error!(
-                    "Can't parse license information from OLicense server {}:{}: {}",
+                    "olicense.rs:fetch: Can't parse license information from OLicense server {}:{}: {}",
                     server, port, e
                 );
                 debug!(

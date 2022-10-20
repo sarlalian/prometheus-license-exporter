@@ -260,7 +260,10 @@ pub fn fetch(lic: &config::Hasp) -> Result<(), Box<dyn Error>> {
                 {
                     Ok(v) => v.timestamp() as f64,
                     Err(e) => {
-                        error!("Can't parse {} as date and time: {}", _expiration, e);
+                        error!(
+                            "hasp.rs:fetch: Can't parse {} as date and time: {}",
+                            _expiration, e
+                        );
                         continue;
                     }
                 }
@@ -354,7 +357,7 @@ pub fn fetch(lic: &config::Hasp) -> Result<(), Box<dyn Error>> {
             match fetch_checkouts(lic) {
                 Ok(_) => {}
                 Err(e) => {
-                    error!("Unable to get license checkouts: {}", e);
+                    error!("hasp.rs:fetch: Unable to get license checkouts: {}", e);
                 }
             }
         }
@@ -459,7 +462,7 @@ fn fetch_checkouts(lic: &config::Hasp) -> Result<(), Box<dyn Error>> {
                 Some(v) => v,
                 None => {
                     error!(
-                        "Checkout of feature id {} of {} has no usr field",
+                        "hasp.rs:fetch_checkouts: Checkout of feature id {} of {} has no usr field",
                         fid, lic.name
                     );
                     continue;

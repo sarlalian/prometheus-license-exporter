@@ -295,7 +295,7 @@ pub fn fetch(lic: &config::Lmx, lmxendutil: &str) -> Result<(), Box<dyn Error>> 
                 Ok(v) => v.timestamp() as f64,
                 Err(e) => {
                     error!(
-                        "Can't parse {} as date and time: {}",
+                        "lmx.rs:fetch: Can't parse {} as date and time: {}",
                         feature.expiration_str, e
                     );
                     continue;

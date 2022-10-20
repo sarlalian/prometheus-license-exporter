@@ -135,7 +135,7 @@ pub fn fetch(lic: &config::Licman20, licman20_appl: &str) -> Result<(), Box<dyn 
         if let Some(capt) = RE_LICMAN20_PRODUCT_KEY.captures(line) {
             if capt.len() != 2 {
                 error!(
-                    "Regular expression returns {} capture groups instead of 2",
+                    "licman20.rs:fetch: Regular expression returns {} capture groups instead of 2 for RE_LICMAN20_PRODUCT_KEY",
                     capt.len()
                 );
                 continue;
@@ -181,7 +181,7 @@ pub fn fetch(lic: &config::Licman20, licman20_appl: &str) -> Result<(), Box<dyn 
         } else if let Some(capt) = RE_LICMAN20_FEATURE.captures(line) {
             if capt.len() != 2 {
                 error!(
-                    "Regular expression returns {} capture groups instead of 2",
+                    "licman20.rs:fetch: Regular expression returns {} capture groups instead of 2 for RE_LICMAN20_FEATURE",
                     capt.len()
                 );
                 continue;
@@ -191,7 +191,7 @@ pub fn fetch(lic: &config::Licman20, licman20_appl: &str) -> Result<(), Box<dyn 
         } else if let Some(capt) = RE_LICMAN20_TOTAL_LICENSES.captures(line) {
             if capt.len() != 2 {
                 error!(
-                    "Regular expression returns {} capture groups instead of 2",
+                    "licman20.rs:fetch: Regular expression returns {} capture groups instead of 2 for RE_LICMAN20_TOTAL_LICENSES",
                     capt.len()
                 );
                 continue;
@@ -204,14 +204,17 @@ pub fn fetch(lic: &config::Licman20, licman20_appl: &str) -> Result<(), Box<dyn 
             total = match _total.parse() {
                 Ok(v) => v,
                 Err(e) => {
-                    error!("Can't parse {} as integer: {}", _total, e);
+                    error!(
+                        "licman20.rs:fetch: Can't parse {} as integer: {}",
+                        _total, e
+                    );
                     continue;
                 }
             };
         } else if let Some(capt) = RE_LICMAN20_USED_LICENSES.captures(line) {
             if capt.len() != 2 {
                 error!(
-                    "Regular expression returns {} capture groups instead of 2",
+                    "licman20.rs:fetch: Regular expression returns {} capture groups instead of 2 for RE_LICMAN20_USED_LICENSES",
                     capt.len()
                 );
                 continue;
@@ -224,14 +227,14 @@ pub fn fetch(lic: &config::Licman20, licman20_appl: &str) -> Result<(), Box<dyn 
             used = match _used.parse() {
                 Ok(v) => v,
                 Err(e) => {
-                    error!("Can't parse {} as integer: {}", _used, e);
+                    error!("licman20.rs:fetch: Can't parse {} as integer: {}", _used, e);
                     continue;
                 }
             };
         } else if let Some(capt) = RE_LICMAN20_END_DATE.captures(line) {
             if capt.len() != 2 {
                 error!(
-                    "Regular expression returns {} capture groups instead of 2",
+                    "licman20.rs:fetch: Regular expression returns {} capture groups instead of 2 RE_LICMAN20_END_DATE",
                     capt.len()
                 );
                 continue;
@@ -244,7 +247,10 @@ pub fn fetch(lic: &config::Licman20, licman20_appl: &str) -> Result<(), Box<dyn 
             ) {
                 Ok(v) => v.timestamp() as f64,
                 Err(e) => {
-                    error!("Can't parse {} as date and time: {}", end_date, e);
+                    error!(
+                        "licman20.rs:fetch: Can't parse {} as date and time: {}",
+                        end_date, e
+                    );
                     continue;
                 }
             };
@@ -438,7 +444,7 @@ fn fetch_checkouts(
         if let Some(capt) = RE_LICMAN20_CHECKOUT.captures(line) {
             if capt.len() != 3 {
                 error!(
-                    "Regular expression returns {} capture groups instead of 3",
+                    "licman20.rs:fetch_checkouts: Regular expression returns {} capture groups instead of 3 for RE_LICMAN20_CHECKOUT",
                     capt.len()
                 );
                 continue;
