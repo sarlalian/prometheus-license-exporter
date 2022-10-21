@@ -383,9 +383,10 @@ fn parse_xml(raw: String) -> Result<OLicenseData, Box<dyn Error>> {
     reader.trim_text(true);
 
     loop {
-        match reader.read_event(&mut buffer) {
+        match reader.read_event_into(&mut buffer) {
             Ok(Event::Start(v)) | Ok(Event::Empty(v)) => {
-                let tag_name = v.name();
+                let _tag_name = v.name().clone();
+                let tag_name = _tag_name.as_ref().clone();
                 match tag_name {
                     b"serverVersion" => {
                         xml_tag = OLIC_TAG_SERVER_VERSION;
@@ -425,20 +426,21 @@ fn parse_xml(raw: String) -> Result<OLicenseData, Box<dyn Error>> {
                 };
             }
             Ok(Event::End(v)) => {
-                let tag_name = v.name();
+                let _tag_name = v.name().clone();
+                let tag_name = _tag_name.as_ref().clone();
                 if let b"license" = tag_name {
                     result.features.push(feature.clone());
                 };
                 xml_tag = 0;
             }
             Ok(Event::Text(txt)) => {
-                let value = txt.unescape_and_decode(&reader)?;
+                let value = txt.unescape()?;
                 match xml_tag {
                     OLIC_TAG_NAME => {
-                        feature.name = value.clone();
+                        feature.name = value.to_string().clone();
                     }
                     OLIC_TAG_MODULE_NAME => {
-                        feature.module = value.clone();
+                        feature.module = value.to_string().clone();
                     }
                     OLIC_TAG_USED => {
                         feature.used = value.parse()?;
@@ -447,12 +449,12 @@ fn parse_xml(raw: String) -> Result<OLicenseData, Box<dyn Error>> {
                         feature.total = value.parse()?;
                     }
                     OLIC_TAG_VENDOR => {
-                        feature.vendor = value.clone();
+                        feature.vendor = value.to_string().clone();
                     }
                     OLIC_TAG_EXPIRATION_DATE => {
-                        feature.expiration_date = value.clone();
+                        feature.expiration_date = value.to_string().clone();
                         feature.expiration = match NaiveDateTime::parse_from_str(
-                            &format!("{} 00:00:00", value.clone()),
+                            &format!("{} 00:00:00", value.to_string().clone()),
                             "%Y-%m-%d %H:%M:%S",
                         ) {
                             Ok(v) => v.timestamp() as f64,
@@ -466,13 +468,13 @@ fn parse_xml(raw: String) -> Result<OLicenseData, Box<dyn Error>> {
                         };
                     }
                     OLIC_TAG_SERVER_VERSION => {
-                        result.server_version = value.clone();
+                        result.server_version = value.to_string().clone();
                     }
                     OLIC_TAG_CHECKOUTS => {
-                        feature.checkouts = parse_checkouts(value.clone())?;
+                        feature.checkouts = parse_checkouts(value.to_string().clone())?;
                     }
                     OLIC_TAG_VERSION_RANGE => {
-                        feature.version_range = value.clone();
+                        feature.version_range = value.to_string().clone();
                     }
                     _ => {}
                 };

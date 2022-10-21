@@ -421,16 +421,18 @@ fn parse_xml(raw: String) -> Result<LmxLicenseData, Box<dyn Error>> {
 
     // XXX: This looks messy but quick_xml gets this job done fast and flexible
     loop {
-        match reader.read_event(&mut buffer) {
+        match reader.read_event_into(&mut buffer) {
             Ok(Event::Start(v)) | Ok(Event::Empty(v)) => {
-                let tag_name = v.name();
+                let _tag_name_v = v.name().clone();
+                let tag_name = _tag_name_v.as_ref();
                 match tag_name {
                     // e.g. <LICENSE_PATH TYPE="NETWORK" HOST="6200@server1" SERVER_VERSION="5.5" UPTIME="8 hour(s) 38 min(s) 33 sec(s)" STATUS="SUCCESS">
                     b"LICENSE_PATH" => {
                         for attribute in v.attributes() {
                             match attribute {
                                 Ok(attr) => {
-                                    let key = str::from_utf8(attr.key)?;
+                                    let _key_ln = attr.key.local_name().clone();
+                                    let key = str::from_utf8(_key_ln.as_ref().clone())?;
                                     let value = str::from_utf8(&attr.value)?;
                                     match key {
                                         "SERVER_VERSION" => {
@@ -461,7 +463,8 @@ fn parse_xml(raw: String) -> Result<LmxLicenseData, Box<dyn Error>> {
                         for attribute in v.attributes() {
                             match attribute {
                                 Ok(attr) => {
-                                    let key = str::from_utf8(attr.key)?;
+                                    let _key_ln = attr.key.local_name().clone();
+                                    let key = str::from_utf8(_key_ln.as_ref().clone())?;
                                     let value = str::from_utf8(&attr.value)?;
 
                                     match key {
@@ -517,7 +520,8 @@ fn parse_xml(raw: String) -> Result<LmxLicenseData, Box<dyn Error>> {
                         for attribute in v.attributes() {
                             match attribute {
                                 Ok(attr) => {
-                                    let key = str::from_utf8(attr.key)?;
+                                    let _key_ln = attr.key.local_name().clone();
+                                    let key = str::from_utf8(_key_ln.as_ref().clone())?;
                                     let value = str::from_utf8(&attr.value)?;
 
                                     match key {
