@@ -1,6 +1,8 @@
+use crate::config;
 use crate::constants;
+use crate::exporter;
 
-use log::debug;
+use log::{debug, error, info};
 use simple_error::bail;
 use std::error::Error;
 use std::fs::File;
@@ -83,4 +85,67 @@ pub fn get(
 
     let reply = response.text()?;
     Ok(reply)
+}
+
+pub fn server(cfg: config::Configuration, listen_address: &str) -> Result<(), Box<dyn Error>> {
+    let headers: Vec<tiny_http::Header> =
+        vec![
+            tiny_http::Header::from_bytes(&b"X-Clacks-Overhead"[..], &b"GNU Terry Pratchett"[..])
+                .unwrap(),
+        ];
+
+    let http_server = tiny_http::Server::http(listen_address).unwrap();
+
+    loop {
+        let request = match http_server.recv() {
+            Ok(v) => v,
+            Err(e) => {
+                error!("Can't process incoming request: {}", e);
+                continue;
+            }
+        };
+        let method = request.method();
+        let url = request.url();
+
+        info!(
+            "http.rs:server: HTTP {} request to {} from {:?}",
+            method,
+            url,
+            request.remote_addr()
+        );
+
+        let status_code: tiny_http::StatusCode;
+        let payload: String;
+
+        if method == &tiny_http::Method::Get {
+            match url {
+                "/" => {
+                    status_code = tiny_http::StatusCode::from(302_i16);
+                    payload = constants::ROOT_HTML.to_string();
+                }
+                constants::DEFAULT_METRICS_PATH => {
+                    let reply = exporter::metrics(&cfg);
+                    status_code = tiny_http::StatusCode::from(200_i16);
+                    payload = reply;
+                }
+                _ => {
+                    status_code = tiny_http::StatusCode::from(404_i16);
+                    payload = constants::REPLY_NOT_FOUND.to_string();
+                }
+            };
+        } else {
+            status_code = tiny_http::StatusCode::from(405_i16);
+            payload = constants::REPLY_METHOD_NOT_ALLOWED.to_string();
+        }
+
+        if let Err(e) = request.respond(tiny_http::Response::new(
+            status_code,
+            headers.clone(),
+            payload.as_bytes(),
+            Some(payload.len()),
+            None,
+        )) {
+            error!("Can't send response to client: {}", e);
+        }
+    }
 }
