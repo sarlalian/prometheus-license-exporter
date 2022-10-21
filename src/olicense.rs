@@ -385,8 +385,8 @@ fn parse_xml(raw: String) -> Result<OLicenseData, Box<dyn Error>> {
     loop {
         match reader.read_event_into(&mut buffer) {
             Ok(Event::Start(v)) | Ok(Event::Empty(v)) => {
-                let _tag_name = v.name().clone();
-                let tag_name = _tag_name.as_ref().clone();
+                let _tag_name = v.name();
+                let tag_name = _tag_name.as_ref();
                 match tag_name {
                     b"serverVersion" => {
                         xml_tag = OLIC_TAG_SERVER_VERSION;
@@ -426,8 +426,8 @@ fn parse_xml(raw: String) -> Result<OLicenseData, Box<dyn Error>> {
                 };
             }
             Ok(Event::End(v)) => {
-                let _tag_name = v.name().clone();
-                let tag_name = _tag_name.as_ref().clone();
+                let _tag_name = v.name();
+                let tag_name = _tag_name.as_ref();
                 if let b"license" = tag_name {
                     result.features.push(feature.clone());
                 };
