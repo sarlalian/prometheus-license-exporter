@@ -65,7 +65,7 @@ pub fn get(
     user: &str,
     password: &str,
 ) -> Result<String, Box<dyn Error>> {
-    debug!("GET {}", &url);
+    debug!("http.rs:get: GET {}", &url);
 
     let response = if user.is_empty() {
         http_client.get(url).send()?
@@ -96,11 +96,13 @@ pub fn server(cfg: config::Configuration, listen_address: &str) -> Result<(), Bo
 
     let http_server = tiny_http::Server::http(listen_address).unwrap();
 
+    info!("http.rs:server: Listening on {}", listen_address);
+
     loop {
         let request = match http_server.recv() {
             Ok(v) => v,
             Err(e) => {
-                error!("Can't process incoming request: {}", e);
+                error!("http.rs:server: Can't process incoming request: {}", e);
                 continue;
             }
         };
@@ -145,7 +147,7 @@ pub fn server(cfg: config::Configuration, listen_address: &str) -> Result<(), Bo
             Some(payload.len()),
             None,
         )) {
-            error!("Can't send response to client: {}", e);
+            error!("http.rs:server: Can't send response to client: {}", e);
         }
     }
 }

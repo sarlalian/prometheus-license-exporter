@@ -89,7 +89,7 @@ fn main() {
 
     exporter::register(&config);
     if let Err(e) = http::server(config, &listen_address) {
-        error!("Can't start HTTP server: {}", e);
+        error!("main.rs:main: Can't start HTTP server: {}", e);
         process::exit(1);
     };
 }

@@ -226,14 +226,17 @@ pub fn fetch(lic: &config::Dsls, dslicsrv: &str) -> Result<(), Box<dyn Error>> {
 
     for l in f_used.keys() {
         if let Some(used) = f_used.get(l) {
-            debug!("Setting dsls_feature_used {} {} -> {}", lic.name, l, used);
+            debug!(
+                "dsls.rs:fetch: Setting dsls_feature_used {} {} -> {}",
+                lic.name, l, used
+            );
             DSLS_FEATURES_USED
                 .with_label_values(&[&lic.name, l])
                 .set(*used);
         }
         if let Some(total) = f_total.get(l) {
             debug!(
-                "Setting dsls_feature_issued {} {} -> {}",
+                "dsls.rs:fetch: Setting dsls_feature_issued {} {} -> {}",
                 lic.name, l, total
             );
             DSLS_FEATURES_TOTAL
@@ -246,7 +249,7 @@ pub fn fetch(lic: &config::Dsls, dslicsrv: &str) -> Result<(), Box<dyn Error>> {
         if let Some(port) = server_port.get(k) {
             if let Some(ver) = server_version.get(k) {
                 debug!(
-                    "Setting dsls_server_status {} {} {} {} -> {}",
+                    "dsls.rs:fetch: Setting dsls_server_status {} {} {} {} -> {}",
                     lic.name, k, port, ver, v
                 );
                 DSLS_SERVER_STATUS

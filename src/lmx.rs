@@ -400,7 +400,10 @@ pub fn fetch(lic: &config::Lmx, lmxendutil: &str) -> Result<(), Box<dyn Error>> 
                     .set(exp);
                 index += 1;
             } else {
-                warn!("Key {} not found in HashMap aggregated", exp_str);
+                warn!(
+                    "lmx.rs:fetch_expiration: Key {} not found in HashMap aggregated",
+                    exp_str
+                );
             }
         }
 

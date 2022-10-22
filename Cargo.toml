@@ -1,6 +1,6 @@
 [package]
 name = "prometheus-license-exporter"
-version = "1.5.2-20221021"
+version = "1.5.3"
 edition = "2021"
 # https://doc.rust-lang.org/cargo/reference/manifest.html#the-rust-version-field
 rust-version = "1.64.0"

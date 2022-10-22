@@ -78,7 +78,7 @@ pub fn metrics(cfg: &config::Configuration) -> String {
                 Ok(_) => {}
                 Err(e) => {
                     error!(
-                        "Can't fetch FlexLM license information for {}: {}",
+                        "exporter.rs:metrics: Can't fetch FlexLM license information for {}: {}",
                         flex.name, e
                     );
                 }
@@ -99,7 +99,7 @@ pub fn metrics(cfg: &config::Configuration) -> String {
                 Ok(_) => {}
                 Err(e) => {
                     error!(
-                        "Can't fetch RLM license information for {}: {}",
+                        "exporter.rs:metrics: Can't fetch RLM license information for {}: {}",
                         _rlm.name, e
                     );
                 }
@@ -120,7 +120,7 @@ pub fn metrics(cfg: &config::Configuration) -> String {
                 Ok(_) => {}
                 Err(e) => {
                     error!(
-                        "Can't fetch LM-X license information for {}: {}",
+                        "exporter.rs:metrics: Can't fetch LM-X license information for {}: {}",
                         _lmx.name, e
                     );
                 }
@@ -141,7 +141,7 @@ pub fn metrics(cfg: &config::Configuration) -> String {
                 Ok(_) => {}
                 Err(e) => {
                     error!(
-                        "Can't fetch DSLS license information for {}: {}",
+                        "exporter.rs:metrics: Can't fetch DSLS license information for {}: {}",
                         _dsls.name, e
                     );
                 }
@@ -162,7 +162,7 @@ pub fn metrics(cfg: &config::Configuration) -> String {
                 Ok(_) => {}
                 Err(e) => {
                     error!(
-                        "Can't fetch Licman20 license information for {}: {}",
+                        "exporter.rs:metrics: Can't fetch Licman20 license information for {}: {}",
                         _licman20.name, e
                     );
                 }
@@ -176,7 +176,7 @@ pub fn metrics(cfg: &config::Configuration) -> String {
                 Ok(_) => {}
                 Err(e) => {
                     error!(
-                        "Can't fetch HASP license information for {}: {}",
+                        "exporter.rs:metrics: Can't fetch HASP license information for {}: {}",
                         _hasp.name, e
                     );
                 }
@@ -190,7 +190,7 @@ pub fn metrics(cfg: &config::Configuration) -> String {
                 Ok(_) => {}
                 Err(e) => {
                     error!(
-                        "Can't fetch OLicense license information for {}: {}",
+                        "exporter.rs:metrics: Can't fetch OLicense license information for {}: {}",
                         _olic.name, e
                     );
                 }
@@ -199,11 +199,17 @@ pub fn metrics(cfg: &config::Configuration) -> String {
     }
 
     if let Err(e) = encoder.encode_utf8(&REGISTRY.gather(), &mut buffer) {
-        error!("Can't encode metrics as UTF8 string: {}", e);
+        error!(
+            "exporter.rs:metrics: Can't encode metrics as UTF8 string: {}",
+            e
+        );
     }
 
     if let Err(e) = encoder.encode_utf8(&prometheus::gather(), &mut buffer) {
-        error!("Can't encode metrics as UTF8 string: {}", e);
+        error!(
+            "exporter.rs:metrics: Can't encode metrics as UTF8 string: {}",
+            e
+        );
     };
     buffer
 }

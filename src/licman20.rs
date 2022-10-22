@@ -366,7 +366,10 @@ pub fn fetch(lic: &config::Licman20, licman20_appl: &str) -> Result<(), Box<dyn 
                 .set(exp);
             index += 1;
         } else {
-            warn!("Key {} not found in HashMap aggregated", exp_str);
+            warn!(
+                "licman20.rs:fetch_expiration: Key {} not found in HashMap aggregated",
+                exp_str
+            );
         }
     }
 
@@ -375,7 +378,10 @@ pub fn fetch(lic: &config::Licman20, licman20_appl: &str) -> Result<(), Box<dyn 
             match fetch_checkouts(lic, licman20_appl, &product_key_map) {
                 Ok(_) => {}
                 Err(e) => {
-                    error!("Unable to get license checkouts: {}", e);
+                    error!(
+                        "licman20.rs:fetch_expiration: Unable to get license checkouts: {}",
+                        e
+                    );
                 }
             }
         }

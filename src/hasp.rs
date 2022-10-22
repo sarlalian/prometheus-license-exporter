@@ -235,7 +235,7 @@ pub fn fetch(lic: &config::Hasp) -> Result<(), Box<dyn Error>> {
             };
             if _licexp.is_empty() {
                 warn!(
-                    "Skippig license expiration for feature id {} of {} because lic field is empty",
+                    "hasp.rs:fetch: Skipping license expiration for feature id {} of {} because lic field is empty",
                     fid, lic.name
                 );
                 continue;
@@ -348,7 +348,10 @@ pub fn fetch(lic: &config::Hasp) -> Result<(), Box<dyn Error>> {
                 .set(exp);
             index += 1;
         } else {
-            warn!("Key {} not found in HashMap aggregated", exp_str);
+            warn!(
+                "hasp.rs:fetch: Key {} not found in HashMap aggregated",
+                exp_str
+            );
         }
     }
 

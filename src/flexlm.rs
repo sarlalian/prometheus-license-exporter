@@ -324,7 +324,10 @@ pub fn fetch(lic: &config::FlexLM, lmutil: &str) -> Result<(), Box<dyn Error>> {
             }
         };
     } else {
-        warn!("No license server informaton received for {}", lic.name);
+        warn!(
+            "flexlm.rs:fetch: No license server informaton received for {}",
+            lic.name
+        );
     }
 
     for server in server_status.keys() {
@@ -624,7 +627,10 @@ fn fetch_expiration(
                 .set(exp);
             index += 1;
         } else {
-            warn!("Key {} not found in HashMap aggregated", exp_str);
+            warn!(
+                "flexlm.rs:fetch_expiration: Key {} not found in HashMap aggregated",
+                exp_str
+            );
         }
     }
     Ok(())
