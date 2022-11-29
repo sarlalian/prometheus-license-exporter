@@ -7,17 +7,17 @@ rust-version = "1.64.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-chrono = "0.4.22"
+chrono = "0.4.23"
 fern = "0.6.1"
 getopts = "0.2.21"
 lazy_static = "1.4.0"
 log = "0.4.17"
 prometheus = { version = "0.13.3", features = ["process"] }
-quick-xml = "0.25.0"
-regex = "1.6.0"
-reqwest = { version = "0.11.12", features = ["blocking", "native-tls"] }
-serde = { version = "1.0.147", features = ["derive"] }
-serde_json = "1.0.87"
+quick-xml = "0.26.0"
+regex = "1.7.0"
+reqwest = { version = "0.11.13", features = ["blocking", "native-tls"] }
+serde = { version = "1.0.148", features = ["derive"] }
+serde_json = "1.0.89"
 serde_yaml = "0.9.14"
 simple-error = "0.2.3"
 tiny_http = "0.12.0"
