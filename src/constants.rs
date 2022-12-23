@@ -1,5 +1,5 @@
-pub const NAME: &str = "prometheus-license-exporter";
-pub const SOURCE: &str = "https://git.ypbind.de/cgit/prometheus-license-exporter";
+pub const NAME: &str = env!("CARGO_PKG_NAME");
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const VERSION: &str = "1.5.2";
 
 pub const DEFAULT_TIMEOUT: u64 = 60;
